@@ -96,9 +96,9 @@ missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
 if missing_vars:
     raise ValueError(f"Missing required environment variables: {missing_vars}")
 
-JWT_SECRET = os.environ.get('JWT_SECRET_KEY')
-AUGMENTOS_API_KEY = os.environ.get('DEV_AUGMENT_API_KEY')
-PACKAGE_NAME = os.environ.get('DEV_AUGMENT_PACKAGE')
+JWT_SECRET = # Fetch your JWT Secret
+AUGMENTOS_API_KEY = # " your Augment OS API Key"
+PACKAGE_NAME = # " your Augment OS Package"
 
 # Create directories
 STATIC_DIR = Path("static")
