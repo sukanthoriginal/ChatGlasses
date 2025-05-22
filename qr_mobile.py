@@ -19,7 +19,7 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)  # For flash messages and session
 
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 # Build full path to .env file
 dotenv_path = os.path.join(project_root, 'mentra.env')

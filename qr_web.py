@@ -86,7 +86,7 @@ auth_manager = AuthenticationManager()
 session_socket_map = {}
 
 # Load environment variables
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 dotenv_path = os.path.join(project_root, 'mentra.env')
 load_dotenv(dotenv_path)
 
@@ -552,5 +552,5 @@ cleanup_thread.start()
 app.template_folder = TEMPLATE_DIR
 
 if __name__ == '__main__':
-    logger.info("Starting Flask server at http://localhost:5000")
-    socketio.run(app, host='localhost', port=5000, debug=True)
+    logger.info("Starting Flask server at http://localhost:98")
+    socketio.run(app, host='localhost', port=98, debug=True)
