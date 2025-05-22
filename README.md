@@ -10,11 +10,11 @@ Access the dashboard of your smart glasses apps in external web browsers by scan
 
 ## Components
 
-### `qr_mobile.py`  
+### `qr_mobile`  
 Server code for app's `/webview` inside AugmentOS with camera for scanning the QR.  
 **Interface:** `/webview` inside AugmentOS App
 
-### `qr_web.py`  
+### `qr_web`  
 Server code for app's external browser session that requires QR login to access user-specific information.  
 **Interface:** Browser sessions in TV or Desktop.
 
@@ -33,5 +33,5 @@ Server code for app's external browser session that requires QR login to access 
 
 ## Architecture:
 
-![image](https://github.com/user-attachments/assets/51cfe15e-bc9d-41bc-b9da-d56acc456c97)
+![image](https://github.com/user-attachments/assets/7050dc3d-109d-4e78-9a0b-7b48d5bd58f6)
 
