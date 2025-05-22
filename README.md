@@ -38,8 +38,8 @@ flowchart LR
     B[Mobile App<br>(Port 96)]
     C[AugmentOS API]
 
-    A <-- "QR Code Display" --> B
-    A <-- "HTTP POST /api/scan" --> B
+    A <-->|QR Code Display| B
+    A <-->|HTTP POST /api/scan| B
 
     B -->|Token Exchange| C
     A -->|Token Exchange| C
@@ -66,7 +66,7 @@ flowchart LR
       C1 --> C2
     end
 
-    %% Connections
+    %% Cross-subgraph interactions
     A1 -.-> B1
     B2 --> C1
     A2 -.-> C2
