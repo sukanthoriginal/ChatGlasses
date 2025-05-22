@@ -1,0 +1,3 @@
+mentra.env
+/webview/.venv/
+/webview/**/__pycache__/

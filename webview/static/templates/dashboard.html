@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .user-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Welcome, {{user_id}}!</h1>
+        <h2>This is your dashboard!</h2>
+        <p>You have successfully logged in.</p>
+        
+        <div class="user-info">
+            <strong>Session Information:</strong><br>
+            User ID: {{user_id}}<br>
+            Login Status: Authenticated
+        </div>
+        
+        <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+</body>
+</html>
