@@ -26,8 +26,7 @@ Server code for app's external browser session that requires QR login to access 
 - **Real-time Communication:** WebSocket integration for instant authentication feedback
 - **Secure Token Handling:** JWT-based secure token exchange and validation
 - **Session Management:** Thread-safe session handling with automatic cleanup
-- **AugmentOS Integration:** Seamless integration with AugmentOS authentication API
-- **Rate Limiting:** Built-in protection against excessive API requests
+- **Rate Limiting:** Against excessive API requests
 - **Auto-cleanup:** Automatic removal of expired QR codes and sessions
 
 
