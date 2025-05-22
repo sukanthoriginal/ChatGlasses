@@ -33,26 +33,6 @@ Server code for app's external browser session that requires QR login to access 
 
 ## Architecture:
 
-┌─────────────────┐    QR Code     ┌─────────────────┐
-│   Desktop App   │ ◄─────────────► │   Mobile App    │
-│   (Port 98)     │    Display      │   (Port 96)     │
-│                 │                 │                 │
-│  1. Shows QR    │                 │  3. Scans QR    │
-│  2. Waits       │◄────────────────│  4. Posts scan  │
-│  5. Redirects   │   HTTP POST     │     data        │
-└─────────────────┘  /api/scan      └─────────────────┘
-                                             ▲
-                                             │
-                                             │ Token
-                                             │ Exchange
-                                             ▼
-                                    ┌─────────────────┐
-                                    │  AugmentOS API  │
-                                    │                 │
-                                    │ • Validates     │
-                                    │   temp tokens   │
-                                    │ • Returns       │
-                                    │   user IDs      │
-                                    └─────────────────┘
+<pre> ```plaintext ## Architecture: ┌─────────────────┐ QR Code ┌─────────────────┐ │ Desktop App │ ◄─────────────► │ Mobile App │ │ (Port 98) │ Display │ (Port 96) │ │ │ │ │ │ 1. Shows QR │ │ 3. Scans QR │ │ 2. Waits │◄────────────────│ 4. Posts scan │ │ 5. Redirects │ HTTP POST │ data │ └─────────────────┘ /api/scan └─────────────────┘ ▲ │ │ Token │ Exchange ▼ ┌─────────────────┐ │ AugmentOS API │ │ │ │ • Validates │ │ temp tokens │ │ • Returns │ │ user IDs │ └─────────────────┘ ``` </pre>
 
 
