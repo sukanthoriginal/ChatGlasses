@@ -1,10 +1,10 @@
 # QR Based Authentication for Smart Glasses Application
 
-Access the dashboard of your smart glasses apps in external web browsers by scanning the QR to login. Users scan QR codes with their mobile devices to authenticate desktop sessions.
+Login and access the dashboard of your smart glasses apps in external web browsers by scanning the QR from AugmentOS webview.
 
 - **What to scan:** QR code on the browser app dashboard to display user-specific information.
-- **Where to get the scan from:** Open webview of your desired app that can scan the QR  
-  // Potentially also scan using camera-enabled smart glasses.
+- **Where to get the scan from:** Open webview of your desired app that can scan the QR.
+  // Potentially also scan using camera-enabled smart glasses in the future.
 
 ---
 
