@@ -33,24 +33,41 @@ Server code for app's external browser session that requires QR login to access 
 
 ## Architecture:
 
-+------------------+    QR Code     +------------------+
-|   Desktop App    | <-------------> |   Mobile App     |
-|   (Port 98)      |    Display      |   (Port 96)      |
-|                  |                 |                  |
-|  1. Shows QR     |                 |  3. Scans QR     |
-|  2. Waits        |<----------------+  4. Posts scan   |
-|  5. Redirects    |   HTTP POST     |     data         |
-+------------------+  /api/scan      +------------------+
-                                              ^
-                                              |
-                                              | Token
-                                              | Exchange
-                                              v
-                                     +------------------+
-                                     |  AugmentOS API   |
-                                     |                  |
-                                     | • Validates      |
-                                     |   temp tokens    |
-                                     | • Returns        |
-                                     |   user IDs       |
-                                     +------------------+
+flowchart LR
+    A[Desktop App<br>(Port 98)] 
+    B[Mobile App<br>(Port 96)]
+    C[AugmentOS API]
+
+    A <-- "QR Code Display" --> B
+    A <-- "HTTP POST /api/scan" --> B
+
+    B -->|Token Exchange| C
+    A -->|Token Exchange| C
+
+    subgraph DesktopApp ["Desktop App"]
+      direction TB
+      A1["1. Shows QR"]
+      A2["2. Waits"]
+      A3["5. Redirects"]
+      A1 --> A2 --> A3
+    end
+
+    subgraph MobileApp ["Mobile App"]
+      direction TB
+      B1["3. Scans QR"]
+      B2["4. Posts scan data"]
+      B1 --> B2
+    end
+
+    subgraph API ["AugmentOS API"]
+      direction TB
+      C1["• Validates temp tokens"]
+      C2["• Returns user IDs"]
+      C1 --> C2
+    end
+
+    %% Connections
+    A1 -.-> B1
+    B2 --> C1
+    A2 -.-> C2
+
