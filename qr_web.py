@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# python qr_web.py
 # All imports organized at the top
 import os
 import json
@@ -96,9 +96,9 @@ missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
 if missing_vars:
     raise ValueError(f"Missing required environment variables: {missing_vars}")
 
-JWT_SECRET = # Fetch your JWT Secret
-AUGMENTOS_API_KEY = # " your Augment OS API Key"
-PACKAGE_NAME = # " your Augment OS Package"
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY')
+AUGMENTOS_API_KEY = os.environ.get('DEV_AUGMENT_API_KEY')
+PACKAGE_NAME = os.environ.get('DEV_AUGMENT_PACKAGE')
 
 # Create directories
 STATIC_DIR = Path("static")
@@ -553,4 +553,5 @@ app.template_folder = TEMPLATE_DIR
 
 if __name__ == '__main__':
     logger.info("Starting Flask server at http://localhost:98")
-    socketio.run(app, host='localhost', port=98, debug=True)
+    socketio.run(app, host='0.0.0.0', port=98, debug=True)
+    
