@@ -31,22 +31,27 @@
         .qr-wrapper {
             position: relative;
         }
+        
         img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
+    width: 200px; /* or any size you prefer */
+    height: 200px;
+    display: block;
+    margin: 0 auto;
+}
         .refresh-button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin-top: 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 20px auto 0; /* top 20px, auto left/right, 0 bottom */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    display: block;  /* Make it block-level for margin auto to work */
+    width: fit-content; /* Optional: shrink to content width */
+}
+
         .refresh-button:hover {
             background-color: #2980b9;
         }
@@ -86,9 +91,9 @@
             100% { transform: rotate(360deg); }
         }
         .instructions {
-            margin: 20px 0;
+            margin: 4px 0;
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 0.8;
             color: #34495e;
             text-align: left;
             padding: 0 10px;
@@ -114,9 +119,7 @@
         </div>
         <div class="timer" id="timer"></div>
     </div>
-    
-    <button class="refresh-button" id="refresh-button">Refresh QR Code</button>
-    
+
     <div class="status-message" id="status-message">
         Waiting for scan...
     </div>
@@ -213,7 +216,7 @@
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = seconds % 60;
             
-            timerElement.innerText = `Code expires in: ${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+            timerElement.innerText = ``;
         }
         
         // Function to check authentication status - FIXED to call the correct endpoint

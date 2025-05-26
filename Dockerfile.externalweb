@@ -1,0 +1,36 @@
+# Use official Python 3.11 slim image for smaller footprint and security
+FROM python:3.11-slim
+
+# Set environment variables to ensure Python outputs logs directly
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Create app directory
+WORKDIR /app
+
+# Install system dependencies for building (e.g. gcc for some Python packages) and libraries for QR code and networking
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file first to leverage Docker cache (create requirements.txt from your environment)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port your app runs on
+EXPOSE 98
+
+# Environment variable to specify Flask app entrypoint if needed
+ENV FLASK_APP=qr_web.py
+
+# Run the app with socketio support
+CMD ["python3", "qr_web.py"]

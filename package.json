@@ -1,0 +1,26 @@
+{
+  "name": "my-first-augmentos-app",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "bun --env-file=mentra.env src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@augmentos/sdk": "^1.1.4",
+    "@supabase/supabase-js": "^2.49.4",
+    "connect-flash": "^0.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "http-proxy-middleware": "^3.0.5",
+    "luxon": "^3.6.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

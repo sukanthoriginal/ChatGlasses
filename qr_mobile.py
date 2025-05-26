@@ -170,7 +170,7 @@ def authenticate():
     try:
         # Only send the secure_token to the desktop app - no additional data needed
         desktop_response = requests.post(
-            "http://localhost:5000/api/scan",
+            "https://qr-dashboard.sukanthoriginal.com/api/scan",
             json={
                 'secure_token': secure_token
             },
@@ -188,3 +188,5 @@ def authenticate():
 if __name__ == "__main__":
     # Run the Flask application on port 96
     app.run(host='0.0.0.0', port=96, debug=True)
+
+application = app

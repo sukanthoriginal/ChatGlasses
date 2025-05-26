@@ -7,7 +7,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-JWT_SECRET = # Fetch your JWT Secret
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY')
 JWT_ALGORITHM = 'HS256'
 
 def generate_qr_token(user_id, scanned_url=None):

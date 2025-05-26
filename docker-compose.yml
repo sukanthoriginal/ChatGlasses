@@ -1,0 +1,41 @@
+
+services:
+  glasses:
+    build: 
+      context: .
+      dockerfile: Dockerfile.glasses
+    ports:
+      - "81:81"
+    volumes:
+      - ./src:/app/src
+
+  webview:
+    build:
+      context: .
+      dockerfile: Dockerfile.webview
+    ports:
+      - "96:96"  # maps host port 96 to container port 96
+    volumes:
+      - .:/app
+    env_file:
+      - mentra.env
+    restart: unless-stopped
+
+
+  externalweb:
+    build:
+      context: .
+      dockerfile: Dockerfile.externalweb  # ✅ Fixed: nested under `build`
+    ports:
+      - "98:98"
+    volumes:
+      - .:/app
+    env_file:
+      - mentra.env
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token {CLOUDFLARED_TOKEN}
+    env_file:
+      - mentra.env

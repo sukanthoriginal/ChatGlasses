@@ -33,4 +33,3 @@ Server code for app's external browser session that requires QR login to access 
 ## Architecture:
 
 ![image](https://github.com/user-attachments/assets/7050dc3d-109d-4e78-9a0b-7b48d5bd58f6)
-

@@ -1,0 +1,10 @@
+Flask
+Flask-SocketIO
+python-dotenv
+supabase
+PyJWT
+requests
+eventlet
+gunicorn
+qrcode[pil]
+

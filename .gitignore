@@ -1,3 +1,19 @@
 mentra.env
 .venv/
 __pycache__/
+
+# Runtime files
+static/qr_codes/*.png
+*.log
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+node_modules
+static/qr_codes
