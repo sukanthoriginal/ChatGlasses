@@ -38,5 +38,4 @@ Server code for app's external browser session that requires QR login to access 
 Inviting collaborators to make this more secure!
 
 ---
-_A Sukanth Original Design & Development
-_
+ A Sukanth Original Design & Development
