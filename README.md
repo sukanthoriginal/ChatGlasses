@@ -24,7 +24,7 @@ Server code for app's external browser session that requires QR login to access 
 
 - **QR Code Authentication:** Desktop displays QR codes, mobile scans to authenticate
 - **Real-time Communication:** WebSocket integration for instant authentication feedback
-- **Secure Token Handling:** JWT-based secure token exchange and validation
+- **Token Handling:** JWT-based secure token exchange and validation
 - **Session Management:** Thread-safe session handling with automatic cleanup
 - **Rate Limiting:** Against excessive API requests
 - **Auto-cleanup:** Automatic removal of expired QR codes and sessions
