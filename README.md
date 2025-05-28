@@ -30,6 +30,13 @@ Server code for app's external browser session that requires QR login to access 
 - **Auto-cleanup:** Automatic removal of expired QR codes and sessions
 
 
-## Architecture:
+## Sequence Diagram:
 
 ![image](https://github.com/user-attachments/assets/7050dc3d-109d-4e78-9a0b-7b48d5bd58f6)
+
+
+Inviting collaborators to make this more secure!
+
+---
+_A Sukanth Original Design & Development
+_
