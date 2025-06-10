@@ -5,568 +5,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contacts Manager</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            padding: 30px;
-            text-align: center;
-            color: white;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 300;
-            margin-bottom: 10px;
-        }
-
-        .user-info {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: inline-block;
-            margin-top: 15px;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .add-contact-form {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .add-contact-form h2 {
-            color: white;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            color: white;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.9);
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-block;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-add {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            width: 100%;
-        }
-
-        .btn-small {
-            padding: 8px 15px;
-            font-size: 14px;
-            margin: 0 5px;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%);
-        }
-
-        .contacts-list {
-            margin-top: 30px;
-        }
-
-        .contacts-list h2 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .contact-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-        }
-
-        .contact-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        }
-
-        .contact-card.blocked {
-            border-left-color: #fc466b;
-            background: linear-gradient(135deg, rgba(252, 70, 107, 0.05) 0%, rgba(63, 94, 251, 0.05) 100%);
-        }
-
-        .contact-card.active {
-            border-left-color: #11998e;
-            background: linear-gradient(135deg, rgba(17, 153, 142, 0.05) 0%, rgba(56, 239, 125, 0.05) 100%);
-        }
-
-        .contact-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .contact-info h3 {
-            color: #333;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-
-        .contact-info p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .contact-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .status-active {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-        }
-
-        .status-blocked {
-            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
-            color: white;
-        }
-
-        .contact-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .edit-form {
-            display: none;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        .edit-form.active {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .edit-form input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .flash-messages {
-            margin-bottom: 20px;
-        }
-
-        .flash-message {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            font-weight: 500;
-            animation: slideIn 0.5s ease;
-        }
-
-        .flash-success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-        }
-
-        .flash-error {
-            background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
-            color: white;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 15px;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .contact-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .contact-actions {
-                justify-content: center;
-            }
-        }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .contact { padding: 10px; border: 1px solid #ddd; margin: 5px 0; }
+        .blocked { background-color: #ffebee; }
+        input, button { margin: 5px; padding: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .form-group { margin: 10px 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Contacts Manager</h1>
-            {% if user_id %}
-            <div class="user-info">
-                Logged in as: {{ user_id }}
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="content">
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                <div class="flash-message flash-{{ 'success' if category == 'success' else 'error' }}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
-
-            <!-- Add Contact Form -->
-            <div class="add-contact-form">
-                <h2>Add New Contact</h2>
-                <form id="addContactForm">
-                    <div class="form-group">
-                        <label for="contact_email">Contact Email:</label>
-                        <input type="email" id="contact_email" name="contact_email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="nickname">Nickname:</label>
-                        <input type="text" id="nickname" name="nickname" required>
-                    </div>
-                    <button type="submit" class="btn btn-add">Add Contact</button>
-                </form>
-            </div>
-
-            <!-- Contacts List -->
-            <div class="contacts-list">
-                <h2>Your Contacts</h2>
-                {% if contacts %}
-                <div id="contactsList">
-                    {% for contact in contacts %}
-                    <div class="contact-card {{ 'blocked' if contact.is_blocked else 'active' }}" data-email="{{ contact.contact_email }}">
-                        <div class="contact-header">
-                            <div class="contact-info">
-                                <h3>{{ contact.nickname }}</h3>
-                                <p>{{ contact.contact_email }}</p>
-                            </div>
-                            <div class="contact-status {{ 'status-blocked' if contact.is_blocked else 'status-active' }}">
-                                {{ 'Blocked' if contact.is_blocked else 'Active' }}
-                            </div>
-                        </div>
-                        
-                        <div class="contact-actions">
-                            <button onclick="toggleEditForm('{{ contact.contact_email }}')" class="btn btn-small">Edit Nickname</button>
-                            {% if contact.is_blocked %}
-                            <button onclick="unblockContact('{{ contact.contact_email }}')" class="btn btn-small btn-warning">Unblock</button>
-                            {% else %}
-                            <button onclick="blockContact('{{ contact.contact_email }}')" class="btn btn-small btn-warning">Block</button>
-                            {% endif %}
-                            <button onclick="removeContact('{{ contact.contact_email }}')" class="btn btn-small btn-danger">Remove</button>
-                        </div>
-
-                        <div class="edit-form" id="editForm_{{ loop.index }}">
-                            <input type="text" placeholder="New nickname" id="newNickname_{{ loop.index }}" value="{{ contact.nickname }}">
-                            <button onclick="updateNickname('{{ contact.contact_email }}', '{{ loop.index }}')" class="btn btn-small">Save</button>
-                            <button onclick="toggleEditForm('{{ contact.contact_email }}')" class="btn btn-small">Cancel</button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="empty-state">
-                    <h3>No contacts yet</h3>
-                    <p>Add your first contact using the form above!</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+    <h1>Contacts Manager</h1>
+    
+    <div id="message"></div>
+    
+    <!-- Add Contact Form -->
+    <div class="form-group">
+        <h3>Add New Contact</h3>
+        <input type="email" id="newEmail" placeholder="Contact Email" required>
+        <input type="text" id="newNickname" placeholder="Nickname" required>
+        <button onclick="addContact()">Add Contact</button>
+    </div>
+    
+    <!-- Contacts List -->
+    <div id="contacts">
+        <h3>Your Contacts</h3>
+        <div id="contactsList"></div>
     </div>
 
     <script>
-        // Add contact form handler
-        document.getElementById('addContactForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {
-                contact_email: formData.get('contact_email'),
-                nickname: formData.get('nickname')
-            };
+        let contacts = [];
 
+        // Fetch and display contacts
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/get_contacts');
+                if (response.ok) {
+                    contacts = await response.json();
+                    displayContacts();
+                } else {
+                    showMessage('Failed to load contacts', 'error');
+                }
+            } catch (error) {
+                showMessage('Error loading contacts: ' + error.message, 'error');
+            }
+        }
+
+        // Display contacts in HTML
+        function displayContacts() {
+            const container = document.getElementById('contactsList');
+            container.innerHTML = '';
+            
+            contacts.forEach(contact => {
+                const div = document.createElement('div');
+                div.className = 'contact' + (contact.is_blocked ? ' blocked' : '');
+                
+                div.innerHTML = `
+                    <strong>${contact.nickname}</strong> - ${contact.contact_email}
+                    ${contact.is_blocked ? '<span style="color: red;">[BLOCKED]</span>' : ''}
+                    <br>
+                    <input type="text" id="nick_${contact.contact_email.replace('@', '_').replace('.', '_')}" 
+                           value="${contact.nickname}" placeholder="New nickname">
+                    <button onclick="updateNickname('${contact.contact_email}')">Update</button>
+                    <button onclick="toggleBlock('${contact.contact_email}', ${contact.is_blocked})">
+                        ${contact.is_blocked ? 'Unblock' : 'Block'}
+                    </button>
+                    <button onclick="removeContact('${contact.contact_email}')" style="color: red;">Remove</button>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Add new contact
+        async function addContact() {
+            const email = document.getElementById('newEmail').value;
+            const nickname = document.getElementById('newNickname').value;
+            
+            if (!email || !nickname) {
+                showMessage('Please fill in both email and nickname', 'error');
+                return;
+            }
+            
             try {
                 const response = await fetch('/api/add_contact', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_email: email, nickname: nickname })
                 });
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage(result.message, 'success');
-                    this.reset();
-                    setTimeout(() => location.reload(), 1000);
+                    showMessage('Contact added successfully!', 'success');
+                    document.getElementById('newEmail').value = '';
+                    document.getElementById('newNickname').value = '';
+                    loadContacts();
                 } else {
-                    showMessage(result.message, 'error');
+                    showMessage(result.message || 'Failed to add contact', 'error');
                 }
             } catch (error) {
                 showMessage('Error adding contact: ' + error.message, 'error');
             }
-        });
-
-        // Toggle edit form
-        function toggleEditForm(email) {
-            const card = document.querySelector(`[data-email="${email}"]`);
-            const editForm = card.querySelector('.edit-form');
-            editForm.classList.toggle('active');
         }
 
         // Update nickname
-        async function updateNickname(email, index) {
-            const newNickname = document.getElementById(`newNickname_${index}`).value;
+        async function updateNickname(contactEmail) {
+            const inputId = 'nick_' + contactEmail.replace('@', '_').replace('.', '_');
+            const newNickname = document.getElementById(inputId).value;
             
-            if (!newNickname.trim()) {
-                showMessage('Nickname cannot be empty', 'error');
+            if (!newNickname) {
+                showMessage('Please enter a nickname', 'error');
                 return;
             }
-
+            
             try {
                 const response = await fetch('/api/update_nickname', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contact_email: email,
-                        new_nickname: newNickname
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_email: contactEmail, new_nickname: newNickname })
                 });
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage(result.message, 'success');
-                    setTimeout(() => location.reload(), 1000);
+                    showMessage('Nickname updated!', 'success');
+                    loadContacts();
                 } else {
-                    showMessage(result.message, 'error');
+                    showMessage(result.message || 'Failed to update nickname', 'error');
                 }
             } catch (error) {
                 showMessage('Error updating nickname: ' + error.message, 'error');
             }
         }
 
-        // Block contact
-        async function blockContact(email) {
-            if (!confirm('Are you sure you want to block this contact?')) return;
-
+        // Toggle block/unblock
+        async function toggleBlock(contactEmail, isBlocked) {
+            const action = isBlocked ? 'unblock' : 'block';
+            
             try {
-                const response = await fetch(`/api/block_contact/${encodeURIComponent(email)}`, {
+                const response = await fetch(`/api/${action}_contact/${contactEmail}`, {
                     method: 'POST'
                 });
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage(result.message, 'success');
-                    setTimeout(() => location.reload(), 1000);
+                    showMessage(`Contact ${action}ed successfully!`, 'success');
+                    loadContacts();
                 } else {
-                    showMessage(result.message, 'error');
+                    showMessage(result.message || `Failed to ${action} contact`, 'error');
                 }
             } catch (error) {
-                showMessage('Error blocking contact: ' + error.message, 'error');
-            }
-        }
-
-        // Unblock contact
-        async function unblockContact(email) {
-            try {
-                const response = await fetch(`/api/unblock_contact/${encodeURIComponent(email)}`, {
-                    method: 'POST'
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage(result.message, 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                showMessage('Error unblocking contact: ' + error.message, 'error');
+                showMessage(`Error ${action}ing contact: ` + error.message, 'error');
             }
         }
 
         // Remove contact
-        async function removeContact(email) {
-            if (!confirm('Are you sure you want to remove this contact? This action cannot be undone.')) return;
-
+        async function removeContact(contactEmail) {
+            if (!confirm('Are you sure you want to remove this contact?')) {
+                return;
+            }
+            
             try {
-                const response = await fetch(`/api/remove_contact/${encodeURIComponent(email)}`, {
+                const response = await fetch(`/api/remove_contact/${contactEmail}`, {
                     method: 'POST'
                 });
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    showMessage(result.message, 'success');
-                    setTimeout(() => location.reload(), 1000);
+                    showMessage('Contact removed successfully!', 'success');
+                    loadContacts();
                 } else {
-                    showMessage(result.message, 'error');
+                    showMessage(result.message || 'Failed to remove contact', 'error');
                 }
             } catch (error) {
                 showMessage('Error removing contact: ' + error.message, 'error');
             }
         }
 
-        // Show message function
+        // Show message to user
         function showMessage(message, type) {
-            // Remove existing messages
-            const existingMessages = document.querySelectorAll('.flash-message');
-            existingMessages.forEach(msg => msg.remove());
-
-            // Create new message
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flash-message flash-${type}`;
-            messageDiv.textContent = message;
-
-            // Insert at the top of content
-            const content = document.querySelector('.content');
-            content.insertBefore(messageDiv, content.firstChild);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 5000);
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 3000);
         }
 
-        // Auto-hide flash messages
-        setTimeout(() => {
-            const flashMessages = document.querySelectorAll('.flash-message');
-            flashMessages.forEach(msg => {
-                msg.style.transition = 'opacity 0.5s ease';
-                msg.style.opacity = '0';
-                setTimeout(() => msg.remove(), 500);
-            });
-        }, 5000);
+        // Load contacts when page loads
+        window.onload = loadContacts;
     </script>
 </body>
 </html>

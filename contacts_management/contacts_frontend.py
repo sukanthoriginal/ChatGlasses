@@ -1,4 +1,4 @@
-# qr_mobile.py
+# contacts_frontend.py
 #!/usr/bin/env python3
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
@@ -282,6 +282,15 @@ def block_contact_api(contact_email):
     if contacts_manager.block_contact(user_id, contact_email):
         return jsonify({'success': True, 'message': 'Contact blocked successfully!'})
     return jsonify({'success': False, 'message': 'Failed to block contact'})
+
+@app.route('/api/get_contacts')
+def get_contacts_api():
+    if not is_authenticated():
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    user_id = session['user_id']
+    contacts_list = contacts_manager.get_contacts(user_id, include_blocked=True)
+    return jsonify(contacts_list)
 
 @app.route('/api/unblock_contact/<contact_email>', methods=['POST'])
 def unblock_contact_api(contact_email):
