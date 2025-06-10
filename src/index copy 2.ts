@@ -9,21 +9,7 @@ const PORT = 81;
 // User database with nicknames
 const userDatabase = new Map<string, string>([
   ['ontelligency@gmail.com', 'John.'],
-  ['optimistic.sukanth@gmail.com', 'Girish.'],
-  ['abc@gmail.com', 'abc'],
-  ['priya@gmail.com', 'priya'],
-  ['xyz@gmail.com', 'xyz'],
-  ['david@gmail.com', 'David']
-]);
-
-// Individual friend lists for each user
-const friendLists = new Map<string, string[]>([
-  ['ontelligency@gmail.com', ['Girish.', 'xyz', 'David']],
-  ['optimistic.sukanth@gmail.com', ['John.', 'abc', 'priya']],
-  ['abc@gmail.com', ['Girish.']],
-  ['priya@gmail.com', ['Girish.']],
-  ['xyz@gmail.com', ['John.']],
-  ['david@gmail.com', ['John.']]
+  ['optimistic.sukanth@gmail.com', 'Girish.']
 ]);
 
 // Reverse lookup for email by nickname
@@ -55,7 +41,7 @@ class MyAugmentOSApp extends TpaServer {
     
     const userNickname = userDatabase.get(userId) || userId;
     
-    // Show initial message with user's friends
+    // Show initial message with available users
     this.showMainMenu(session, userId);
 
     // Subscribe to transcription events for chat commands
@@ -75,8 +61,6 @@ class MyAugmentOSApp extends TpaServer {
         this.handleEndChat(userId);
       } else if (text === 'menu' || text === 'main menu') {
         this.showMainMenu(session, userId);
-      } else if (text === 'friends' || text === 'friend list') {
-        this.showFriendsList(session, userId);
       } else {
         // If in active chat, send message to chat partner
         const partnerId = activeChatSessions.get(userId);
@@ -102,81 +86,40 @@ class MyAugmentOSApp extends TpaServer {
 
   private showMainMenu(session: TpaSession, userId: string): void {
     const userNickname = userDatabase.get(userId) || userId;
-    const onlineFriends = this.getOnlineFriends(userId);
+    const availableUsers: string[] = [];
+    
+    activeSessions.forEach((_, otherUserId) => {
+      if (otherUserId !== userId) {
+        const otherNickname = userDatabase.get(otherUserId) || otherUserId;
+        availableUsers.push(otherNickname);
+      }
+    });
 
     let message = `Welcome ${userNickname}!\n\n`;
     
-    //message += "Commands:\n";
-    message += "• Say 'Chat [friend name]' to start a chat\n";
-    //message += "• Say 'Accept' to accept incoming chat requests\n";
-    //message += "• Say 'Reject' to reject incoming chat requests\n";
-    //message += "• Say 'End chat' to end current chat\n";
-    //message += "• Say 'Friends' to see your full friend list\n";
-    //message += "• Say 'Menu' to show this menu";
-
-    session.layouts.showTextWall(message);
-    //display for 5 seconds then
-    setTimeout(() => {
-    session.layouts.showTextWall(" ");
-}, 5000);
-
-  }
-
-  private showFriendsList(session: TpaSession, userId: string): void {
-    const userNickname = userDatabase.get(userId) || userId;
-    const userFriends = friendLists.get(userId) || [];
-    const onlineFriends = this.getOnlineFriends(userId);
-    
-    let message = `${userNickname}'s Friends:\n\n`;
-    
-    if (userFriends.length === 0) {
-      message += "You have no friends in your list.";
+    if (availableUsers.length === 0) {
+      message += "No other users online. Waiting for connections...";
     } else {
-      userFriends.forEach(friend => {
-        const isOnline = onlineFriends.includes(friend);
-        const status = isOnline ? "🟢 Online" : "⚫ Offline";
-        message += `• ${friend} - ${status}\n`;
-      });
-      
-      message += `\nSay 'Chat [friend name]' to start chatting with an online friend.`;
+      message += `Available users: ${availableUsers.join(', ')}\n\n`;
+      message += "Commands:\n";
+      message += "• Say 'Chat [nickname]' to start a chat\n";
+      message += "• Say 'Accept' to accept incoming chat requests\n";
+      message += "• Say 'Reject' to reject incoming chat requests\n";
+      message += "• Say 'End chat' to end current chat\n";
+      message += "• Say 'Menu' to show this menu";
     }
 
     session.layouts.showTextWall(message);
-  }
-
-  private getOnlineFriends(userId: string): string[] {
-    const userFriends = friendLists.get(userId) || [];
-    const onlineFriends: string[] = [];
-    
-    userFriends.forEach(friendNickname => {
-      const friendEmail = nicknameToEmail.get(friendNickname);
-      if (friendEmail && activeSessions.has(friendEmail)) {
-        onlineFriends.push(friendNickname);
-      }
-    });
-    
-    return onlineFriends;
   }
 
   private handleChatRequest(fromUserId: string, targetNickname: string): void {
     const fromNickname = userDatabase.get(fromUserId) || fromUserId;
-    const userFriends = friendLists.get(fromUserId) || [];
-    
-    // Check if target is in user's friend list
-    if (!userFriends.includes(targetNickname)) {
-      const session = activeSessions.get(fromUserId);
-      if (session) {
-        session.layouts.showTextWall(`"${targetNickname}" is not in your friend list. Available friends: ${this.getOnlineFriends(fromUserId).join(', ')}`);
-      }
-      return;
-    }
-
     const targetEmail = nicknameToEmail.get(targetNickname);
     
     if (!targetEmail) {
       const session = activeSessions.get(fromUserId);
       if (session) {
-        session.layouts.showTextWall(`User "${targetNickname}" not found.`);
+        session.layouts.showTextWall(`User "${targetNickname}" not found. Available users: ${this.getAvailableNicknames(fromUserId).join(', ')}`);
       }
       return;
     }
@@ -189,12 +132,10 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Check if the target user also has the sender as a friend (mutual friendship)
-    const targetFriends = friendLists.get(targetEmail) || [];
-    if (!targetFriends.includes(fromNickname)) {
+    if (fromUserId === targetEmail) {
       const session = activeSessions.get(fromUserId);
       if (session) {
-        session.layouts.showTextWall(`You can only chat with mutual friends. ${targetNickname} doesn't have you in their friend list.`);
+        session.layouts.showTextWall("You cannot chat with yourself!");
       }
       return;
     }
@@ -236,7 +177,7 @@ class MyAugmentOSApp extends TpaServer {
     if (!chatRequest) {
       const session = activeSessions.get(userId);
       if (session) {
-this.showTemporaryMessage(session, "No pending chat requests.");
+        session.layouts.showTextWall("No pending chat requests.");
       }
       return;
     }
@@ -266,7 +207,7 @@ this.showTemporaryMessage(session, "No pending chat requests.");
     if (!chatRequest) {
       const session = activeSessions.get(userId);
       if (session) {
-          this.showTemporaryMessage(session, "No pending chat requests.");
+        session.layouts.showTextWall("No pending chat requests.");
       }
       return;
     }
@@ -288,20 +229,13 @@ this.showTemporaryMessage(session, "No pending chat requests.");
       this.showMainMenu(toSession, userId);
     }
   }
-  private showTemporaryMessage(session: TpaSession, message: string, duration: number = 5000): void {
-  session.layouts.showTextWall(message);
-  setTimeout(() => {
-    session.layouts.showTextWall("");
-  }, duration);
-}
 
   private handleEndChat(userId: string): void {
     const partnerId = activeChatSessions.get(userId);
     if (!partnerId) {
       const session = activeSessions.get(userId);
       if (session) {
-        this.showTemporaryMessage(session, "You are not in an active chat.");
-        
+        session.layouts.showTextWall("You are not in an active chat.");
       }
       return;
     }
@@ -317,12 +251,12 @@ this.showTemporaryMessage(session, "No pending chat requests.");
     const partnerSession = activeSessions.get(partnerId);
 
     if (userSession) {
-this.showTemporaryMessage(userSession, `Chat with ${partnerNickname} ended.`);
+      userSession.layouts.showTextWall(`Chat with ${partnerNickname} ended.`);
       this.showMainMenu(userSession, userId);
     }
 
     if (partnerSession) {
-      this.showTemporaryMessage(partnerSession, `${userNickname} ended the chat.`);
+      partnerSession.layouts.showTextWall(`${userNickname} ended the chat.`);
       this.showMainMenu(partnerSession, partnerId);
     }
   }
@@ -369,13 +303,21 @@ this.showTemporaryMessage(userSession, `Chat with ${partnerNickname} ended.`);
       }
     });
 
-    // Notify remaining users who have this user as a friend about the disconnection
+    // Notify remaining users about disconnection
     activeSessions.forEach((session, remainingUserId) => {
-      const remainingUserFriends = friendLists.get(remainingUserId) || [];
-      if (remainingUserFriends.includes(userNickname)) {
-        this.showMainMenu(session, remainingUserId);
+      this.showMainMenu(session, remainingUserId);
+    });
+  }
+
+  private getAvailableNicknames(excludeUserId: string): string[] {
+    const available: string[] = [];
+    activeSessions.forEach((_, userId) => {
+      if (userId !== excludeUserId) {
+        const nickname = userDatabase.get(userId) || userId;
+        available.push(nickname);
       }
     });
+    return available;
   }
 }
 
