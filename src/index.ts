@@ -8,8 +8,8 @@ const PORT = 81;
 
 // User database with nicknames
 const userDatabase = new Map<string, string>([
-  ['ontelligency@gmail.com', 'John.'],
-  ['optimistic.sukanth@gmail.com', 'Girish.'],
+  ['ontelligency@gmail.com', 'John'],
+  ['optimistic.sukanth@gmail.com', 'Girish'],
   ['abc@gmail.com', 'abc'],
   ['priya@gmail.com', 'priya'],
   ['xyz@gmail.com', 'xyz'],
@@ -18,12 +18,12 @@ const userDatabase = new Map<string, string>([
 
 // Individual friend lists for each user
 const friendLists = new Map<string, string[]>([
-  ['ontelligency@gmail.com', ['Girish.', 'xyz', 'David']],
-  ['optimistic.sukanth@gmail.com', ['John.', 'abc', 'priya']],
-  ['abc@gmail.com', ['Girish.']],
-  ['priya@gmail.com', ['Girish.']],
-  ['xyz@gmail.com', ['John.']],
-  ['david@gmail.com', ['John.']]
+  ['ontelligency@gmail.com', ['Girish', 'xyz', 'David']],
+  ['optimistic.sukanth@gmail.com', ['John', 'abc', 'priya']],
+  ['abc@gmail.com', ['Girish']],
+  ['priya@gmail.com', ['Girish']],
+  ['xyz@gmail.com', ['John']],
+  ['david@gmail.com', ['John']]
 ]);
 
 // Reverse lookup for email by nickname
@@ -65,7 +65,7 @@ class MyAugmentOSApp extends TpaServer {
       
       // Handle chat commands
       if (text.startsWith('chat ')) {
-        const targetNickname = data.text.substring(5).trim();
+        const targetNickname = this.cleanInput(data.text.substring(5).trim());
         this.handleChatRequest(userId, targetNickname);
       } else if (text === 'accept' || text === 'accept chat') {
         this.handleChatAccept(userId);
@@ -100,14 +100,20 @@ class MyAugmentOSApp extends TpaServer {
     });
   }
 
+  private cleanInput(text: string): string {
+  return text.replace(/[.,!?;:]$/, '').trim();
+}
+
   private showMainMenu(session: TpaSession, userId: string): void {
     const userNickname = userDatabase.get(userId) || userId;
     const onlineFriends = this.getOnlineFriends(userId);
 
     let message = `Welcome ${userNickname}!\n\n`;
     
+    message += "ChatGlasses!\n";
+    
     //message += "Commands:\n";
-    message += "• Say 'Chat [friend name]' to start a chat\n";
+    message += "• Say 'Chat [friend name]' to start a new chat\n";
     //message += "• Say 'Accept' to accept incoming chat requests\n";
     //message += "• Say 'Reject' to reject incoming chat requests\n";
     //message += "• Say 'End chat' to end current chat\n";
@@ -222,13 +228,39 @@ class MyAugmentOSApp extends TpaServer {
     const fromSession = activeSessions.get(fromUserId);
     const toSession = activeSessions.get(targetEmail);
 
-    if (fromSession) {
-      fromSession.layouts.showTextWall(`Chat request sent to ${targetNickname}. Waiting for response...`);
+if (fromSession) {
+  let countdown = 30;
+  const updateFrom = () => {
+    if (!pendingChatRequests.has(targetEmail)) {
+      return; // Stop if request no longer exists
     }
+    fromSession.layouts.showTextWall(`Chat request sent to ${targetNickname}. Waiting for response... (${countdown}s)`);
+    countdown--;
+    if (countdown >= 0) {
+      setTimeout(updateFrom, 1000);
+    } else {
+      this.showMainMenu(fromSession, fromUserId);
+    }
+  };
+  updateFrom();
+}
 
-    if (toSession) {
-      toSession.layouts.showTextWall(`Chat request from ${fromNickname}!\nSay "Accept" to accept or "Reject" to decline.`);
+if (toSession) {
+  let countdown = 30;
+  const updateTo = () => {
+    if (!pendingChatRequests.has(targetEmail)) {
+      return; // Stop if request no longer exists
     }
+    toSession.layouts.showTextWall(`Chat request from ${fromNickname}!\nSay "Accept" to accept or "Reject" to decline. (${countdown}s)`);
+    countdown--;
+    if (countdown >= 0) {
+      setTimeout(updateTo, 1000);
+    } else {
+      this.showMainMenu(toSession, targetEmail);
+    }
+  };
+  updateTo();
+}
   }
 
   private handleChatAccept(userId: string): void {
@@ -244,6 +276,8 @@ this.showTemporaryMessage(session, "No pending chat requests.");
     // Remove the pending request
     pendingChatRequests.delete(userId);
 
+    
+
     // Start the chat session
     activeChatSessions.set(chatRequest.fromUserId, userId);
     activeChatSessions.set(userId, chatRequest.fromUserId);
@@ -251,6 +285,15 @@ this.showTemporaryMessage(session, "No pending chat requests.");
     const userNickname = userDatabase.get(userId) || userId;
     const fromSession = activeSessions.get(chatRequest.fromUserId);
     const toSession = activeSessions.get(userId);
+
+      // Clear the countdown messages first
+  if (fromSession) {
+    fromSession.layouts.showTextWall(" "); // Clear the countdown message
+  }
+  if (toSession) {
+    toSession.layouts.showTextWall(" "); // Clear the countdown message
+  }
+
 
     if (fromSession) {
       fromSession.layouts.showTextWall(`${userNickname} accepted your chat request! You can now talk. Say "End chat" to exit.`);

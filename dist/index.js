@@ -6,8 +6,8 @@ const API_KEY = process.env.DEV_AUGMENT_API_KEY;
 const PORT = 81;
 // User database with nicknames
 const userDatabase = new Map([
-    ['ontelligency@gmail.com', 'John.'],
-    ['optimistic.sukanth@gmail.com', 'Girish.'],
+    ['ontelligency@gmail.com', 'John'],
+    ['optimistic.sukanth@gmail.com', 'Girish'],
     ['abc@gmail.com', 'abc'],
     ['priya@gmail.com', 'priya'],
     ['xyz@gmail.com', 'xyz'],
@@ -15,12 +15,12 @@ const userDatabase = new Map([
 ]);
 // Individual friend lists for each user
 const friendLists = new Map([
-    ['ontelligency@gmail.com', ['Girish.', 'xyz', 'David']],
-    ['optimistic.sukanth@gmail.com', ['John.', 'abc', 'priya']],
-    ['abc@gmail.com', ['Girish.']],
-    ['priya@gmail.com', ['Girish.']],
-    ['xyz@gmail.com', ['John.']],
-    ['david@gmail.com', ['John.']]
+    ['ontelligency@gmail.com', ['Girish', 'xyz', 'David']],
+    ['optimistic.sukanth@gmail.com', ['John', 'abc', 'priya']],
+    ['abc@gmail.com', ['Girish']],
+    ['priya@gmail.com', ['Girish']],
+    ['xyz@gmail.com', ['John']],
+    ['david@gmail.com', ['John']]
 ]);
 // Reverse lookup for email by nickname
 const nicknameToEmail = new Map();
@@ -45,7 +45,7 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
             console.log(`Command from user ${userId} (${userNickname}): ${data.text}`);
             // Handle chat commands
             if (text.startsWith('chat ')) {
-                const targetNickname = data.text.substring(5).trim();
+                const targetNickname = this.cleanInput(data.text.substring(5).trim());
                 this.handleChatRequest(userId, targetNickname);
             }
             else if (text === 'accept' || text === 'accept chat') {
@@ -83,12 +83,16 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
             });
         });
     }
+    cleanInput(text) {
+        return text.replace(/[.,!?;:]$/, '').trim();
+    }
     showMainMenu(session, userId) {
         const userNickname = userDatabase.get(userId) || userId;
         const onlineFriends = this.getOnlineFriends(userId);
         let message = `Welcome ${userNickname}!\n\n`;
+        message += "ChatGlasses!\n";
         //message += "Commands:\n";
-        message += "• Say 'Chat [friend name]' to start a chat\n";
+        message += "• Say 'Chat [friend name]' to start a new chat\n";
         //message += "• Say 'Accept' to accept incoming chat requests\n";
         //message += "• Say 'Reject' to reject incoming chat requests\n";
         //message += "• Say 'End chat' to end current chat\n";
@@ -184,10 +188,38 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         const fromSession = activeSessions.get(fromUserId);
         const toSession = activeSessions.get(targetEmail);
         if (fromSession) {
-            fromSession.layouts.showTextWall(`Chat request sent to ${targetNickname}. Waiting for response...`);
+            let countdown = 30;
+            const updateFrom = () => {
+                if (!pendingChatRequests.has(targetEmail)) {
+                    return; // Stop if request no longer exists
+                }
+                fromSession.layouts.showTextWall(`Chat request sent to ${targetNickname}. Waiting for response... (${countdown}s)`);
+                countdown--;
+                if (countdown >= 0) {
+                    setTimeout(updateFrom, 1000);
+                }
+                else {
+                    this.showMainMenu(fromSession, fromUserId);
+                }
+            };
+            updateFrom();
         }
         if (toSession) {
-            toSession.layouts.showTextWall(`Chat request from ${fromNickname}!\nSay "Accept" to accept or "Reject" to decline.`);
+            let countdown = 30;
+            const updateTo = () => {
+                if (!pendingChatRequests.has(targetEmail)) {
+                    return; // Stop if request no longer exists
+                }
+                toSession.layouts.showTextWall(`Chat request from ${fromNickname}!\nSay "Accept" to accept or "Reject" to decline. (${countdown}s)`);
+                countdown--;
+                if (countdown >= 0) {
+                    setTimeout(updateTo, 1000);
+                }
+                else {
+                    this.showMainMenu(toSession, targetEmail);
+                }
+            };
+            updateTo();
         }
     }
     handleChatAccept(userId) {
@@ -207,6 +239,13 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         const userNickname = userDatabase.get(userId) || userId;
         const fromSession = activeSessions.get(chatRequest.fromUserId);
         const toSession = activeSessions.get(userId);
+        // Clear the countdown messages first
+        if (fromSession) {
+            fromSession.layouts.showTextWall(" "); // Clear the countdown message
+        }
+        if (toSession) {
+            toSession.layouts.showTextWall(" "); // Clear the countdown message
+        }
         if (fromSession) {
             fromSession.layouts.showTextWall(`${userNickname} accepted your chat request! You can now talk. Say "End chat" to exit.`);
         }
