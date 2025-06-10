@@ -6,6 +6,16 @@ const PACKAGE_NAME = process.env.DEV_AUGMENT_PACKAGE as string;
 const API_KEY = process.env.DEV_AUGMENT_API_KEY as string;
 const PORT = 81;
 
+// User database with each user's own display name (how they want to be known by the system)
+const userDatabase = new Map<string, string>([
+  ['ontelligency@gmail.com', 'John'],
+  ['optimistic.sukanth@gmail.com', 'Girish'],
+  ['abc@gmail.com', 'abc'],
+  ['priya@gmail.com', 'priya'],
+  ['xyz@gmail.com', 'xyz'],
+  ['david@gmail.com', 'David']
+]);
+
 // Individual friend lists using email addresses (absolute userIds)
 const friendLists = new Map<string, string[]>([
   ['ontelligency@gmail.com', ['optimistic.sukanth@gmail.com', 'xyz@gmail.com', 'david@gmail.com']],
@@ -58,8 +68,8 @@ const getUserEmailByNickname = (userId: string, nickname: string): string | unde
 // Get nickname that a user uses for another user
 const getNicknameForUser = (userId: string, targetUserId: string): string => {
   const userNicknames = personalNicknames.get(userId);
-  // Try personal nickname, then fall back to email
-  return userNicknames?.get(targetUserId) || targetUserId;
+  // First try personal nickname, then fall back to target's own display name, then email
+  return userNicknames?.get(targetUserId) || userDatabase.get(targetUserId) || targetUserId;
 };
 
 // Store active sessions
@@ -83,13 +93,15 @@ class MyAugmentOSApp extends TpaServer {
     // Store the session
     activeSessions.set(userId, session);
     
+    const userNickname = userDatabase.get(userId) || userId;
+    
     // Show initial message with user's friends
     this.showMainMenu(session, userId);
 
     // Subscribe to transcription events for chat commands
     const unsubscribe = session.events.onTranscription((data) => {
       const text = data.text.toLowerCase().trim();
-      console.log(`Command from user ${userId}: ${data.text}`);
+      console.log(`Command from user ${userId} (${userNickname}): ${data.text}`);
       
       // Handle chat commands
       if (text.startsWith('chat ')) {
@@ -122,7 +134,7 @@ class MyAugmentOSApp extends TpaServer {
     // Handle disconnection
     await new Promise<void>(resolve => {
       session.events.onDisconnected(() => {
-        console.log(`User ${userId} disconnected`);
+        console.log(`User ${userId} (${userNickname}) disconnected`);
         this.handleUserDisconnect(userId);
         resolve();
       });
@@ -134,9 +146,10 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private showMainMenu(session: TpaSession, userId: string): void {
+    const userNickname = userDatabase.get(userId) || userId;
     const onlineFriends = this.getOnlineFriends(userId);
 
-    let message = `Welcome!\n\n`;
+    let message = `Welcome ${userNickname}!\n\n`;
     
     message += "ChatGlasses!\n";
     
@@ -150,10 +163,11 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private showFriendsList(session: TpaSession, userId: string): void {
+    const userNickname = userDatabase.get(userId) || userId;
     const userFriends = friendLists.get(userId) || [];
     const onlineFriends = this.getOnlineFriends(userId);
     
-    let message = `Your Friends:\n\n`;
+    let message = `${userNickname}'s Friends:\n\n`;
     
     if (userFriends.length === 0) {
       message += "You have no friends in your list.";
@@ -190,6 +204,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private handleChatRequest(fromUserId: string, targetNickname: string): void {
+    const fromNickname = userDatabase.get(fromUserId) || fromUserId;
     const userFriends = friendLists.get(fromUserId) || [];
     
     // Find target email by nickname in user's personal nicknames
@@ -395,6 +410,8 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private handleUserDisconnect(userId: string): void {
+    const userNickname = userDatabase.get(userId) || userId;
+    
     // Remove from active sessions
     activeSessions.delete(userId);
 

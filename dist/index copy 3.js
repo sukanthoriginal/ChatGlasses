@@ -4,6 +4,15 @@ const sdk_1 = require("@augmentos/sdk");
 const PACKAGE_NAME = process.env.DEV_AUGMENT_PACKAGE;
 const API_KEY = process.env.DEV_AUGMENT_API_KEY;
 const PORT = 81;
+// User database with each user's own display name (how they want to be known by the system)
+const userDatabase = new Map([
+    ['ontelligency@gmail.com', 'John'],
+    ['optimistic.sukanth@gmail.com', 'Girish'],
+    ['abc@gmail.com', 'abc'],
+    ['priya@gmail.com', 'priya'],
+    ['xyz@gmail.com', 'xyz'],
+    ['david@gmail.com', 'David']
+]);
 // Individual friend lists using email addresses (absolute userIds)
 const friendLists = new Map([
     ['ontelligency@gmail.com', ['optimistic.sukanth@gmail.com', 'xyz@gmail.com', 'david@gmail.com']],
@@ -53,8 +62,8 @@ const getUserEmailByNickname = (userId, nickname) => {
 // Get nickname that a user uses for another user
 const getNicknameForUser = (userId, targetUserId) => {
     const userNicknames = personalNicknames.get(userId);
-    // Try personal nickname, then fall back to email
-    return userNicknames?.get(targetUserId) || targetUserId;
+    // First try personal nickname, then fall back to target's own display name, then email
+    return userNicknames?.get(targetUserId) || userDatabase.get(targetUserId) || targetUserId;
 };
 // Store active sessions
 const activeSessions = new Map();
@@ -65,12 +74,13 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         console.log(`User ${userId} connected with session ${sessionId}`);
         // Store the session
         activeSessions.set(userId, session);
+        const userNickname = userDatabase.get(userId) || userId;
         // Show initial message with user's friends
         this.showMainMenu(session, userId);
         // Subscribe to transcription events for chat commands
         const unsubscribe = session.events.onTranscription((data) => {
             const text = data.text.toLowerCase().trim();
-            console.log(`Command from user ${userId}: ${data.text}`);
+            console.log(`Command from user ${userId} (${userNickname}): ${data.text}`);
             // Handle chat commands
             if (text.startsWith('chat ')) {
                 const targetNickname = this.cleanInput(data.text.substring(5).trim());
@@ -106,7 +116,7 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         // Handle disconnection
         await new Promise(resolve => {
             session.events.onDisconnected(() => {
-                console.log(`User ${userId} disconnected`);
+                console.log(`User ${userId} (${userNickname}) disconnected`);
                 this.handleUserDisconnect(userId);
                 resolve();
             });
@@ -116,8 +126,9 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         return text.replace(/[.,!?;:]$/, '').trim();
     }
     showMainMenu(session, userId) {
+        const userNickname = userDatabase.get(userId) || userId;
         const onlineFriends = this.getOnlineFriends(userId);
-        let message = `Welcome!\n\n`;
+        let message = `Welcome ${userNickname}!\n\n`;
         message += "ChatGlasses!\n";
         message += "• Say 'Chat [friend name]' to start a new chat\n";
         session.layouts.showTextWall(message);
@@ -126,9 +137,10 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         }, 5000);
     }
     showFriendsList(session, userId) {
+        const userNickname = userDatabase.get(userId) || userId;
         const userFriends = friendLists.get(userId) || [];
         const onlineFriends = this.getOnlineFriends(userId);
-        let message = `Your Friends:\n\n`;
+        let message = `${userNickname}'s Friends:\n\n`;
         if (userFriends.length === 0) {
             message += "You have no friends in your list.";
         }
@@ -158,6 +170,7 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         return onlineFriendEmails.map(email => getNicknameForUser(userId, email));
     }
     handleChatRequest(fromUserId, targetNickname) {
+        const fromNickname = userDatabase.get(fromUserId) || fromUserId;
         const userFriends = friendLists.get(fromUserId) || [];
         // Find target email by nickname in user's personal nicknames
         const targetEmail = getUserEmailByNickname(fromUserId, targetNickname);
@@ -334,6 +347,7 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         }
     }
     handleUserDisconnect(userId) {
+        const userNickname = userDatabase.get(userId) || userId;
         // Remove from active sessions
         activeSessions.delete(userId);
         // Handle if user was in a chat
