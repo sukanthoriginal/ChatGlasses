@@ -6,33 +6,87 @@ const PACKAGE_NAME = process.env.DEV_AUGMENT_PACKAGE as string;
 const API_KEY = process.env.DEV_AUGMENT_API_KEY as string;
 const PORT = 81;
 
-// Single data structure - personal nickname mappings
-// If a user has a nickname for someone, they're friends
-const personalNicknames = new Map<string, Map<string, string>>([
-  ['john@example.com', new Map([
-    ['mom@family.com', "Mom"],
-    ['alice@example.com', "Alice (Sister)"],
-    ['bob@work.com', "Bob from Work"],
-  ])],
-  ['ontelligency@gmail.com', new Map([
-    ['optimistic.sukanth@gmail.com', "Girish"],
-    ['sukanth.electronom@gmail.com', "Girish's Girlfriend"],
-  ])],
-  ['optimistic.sukanth@gmail.com', new Map([
-    ['ontelligency@gmail.com', "David"],
-    ['sukanth.electronom@gmail.com', "My Girlfriend"],
-  ])],
-]);
+// Dynamic data structure - fetched from Python backend
+let personalNicknames = new Map<string, Map<string, string>>();
 
-// Helper functions derived from the single data structure
+// Function to fetch contacts from Python backend
+async function fetchContactsFromDB(): Promise<void> {
+  try {
+    const { spawn } = require('child_process');
+    const python = spawn('python', ['src/contacts_db.py']);
+    
+    let dataString = '';
+    
+    python.stdout.on('data', (data: Buffer) => {
+      dataString += data.toString();
+    });
+    
+    python.stderr.on('data', (data: Buffer) => {
+      console.error(`Python error: ${data}`);
+    });
+    
+    python.on('close', (code: number) => {
+      if (code === 0) {
+        try {
+          // Parse the TypeScript output and extract the data
+          const lines = dataString.trim().split('\n');
+          const newPersonalNicknames = new Map<string, Map<string, string>>();
+          
+          let currentUserId = '';
+          let inUserSection = false;
+          
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            // Match user ID line: ['user@example.com', new Map([
+            const userMatch = trimmedLine.match(/^\['([^']+)',\s*new Map\(\[$/);
+            if (userMatch) {
+              currentUserId = userMatch[1];
+              newPersonalNicknames.set(currentUserId, new Map<string, string>());
+              inUserSection = true;
+              continue;
+            }
+            
+            // Match contact line: ['contact@example.com', "Nickname"],
+            const contactMatch = trimmedLine.match(/^\['([^']+)',\s*"([^"]+)"\],?$/);
+            if (contactMatch && currentUserId) {
+              const contactEmail = contactMatch[1];
+              const nickname = contactMatch[2];
+              newPersonalNicknames.get(currentUserId)?.set(contactEmail, nickname);
+              continue;
+            }
+            
+            // End of user section
+            if (trimmedLine === '])],') {
+              inUserSection = false;
+              currentUserId = '';
+            }
+          }
+          
+          personalNicknames = newPersonalNicknames;
+          console.log('✅ Contacts updated from database');
+        } catch (parseError) {
+          console.error('❌ Failed to parse contacts data:', parseError);
+        }
+      } else {
+        console.error(`❌ Python script exited with code ${code}`);
+      }
+    });
+  } catch (error) {
+    console.error('❌ Failed to fetch contacts:', error);
+  }
+}
 
-// Get all friends of a user (anyone they have a nickname for)
+// Initial fetch and periodic refresh
+fetchContactsFromDB();
+setInterval(fetchContactsFromDB, 30000); // Refresh every 30 seconds
+
+// Helper functions (unchanged)
 const getFriends = (userId: string): string[] => {
   const userNicknames = personalNicknames.get(userId);
   return userNicknames ? Array.from(userNicknames.keys()) : [];
 };
 
-// Check if two users are mutual friends
 const areMutualFriends = (userId1: string, userId2: string): boolean => {
   const user1Nicknames = personalNicknames.get(userId1);
   const user2Nicknames = personalNicknames.get(userId2);
@@ -40,7 +94,6 @@ const areMutualFriends = (userId1: string, userId2: string): boolean => {
   return !!(user1Nicknames?.has(userId2) && user2Nicknames?.has(userId1));
 };
 
-// Reverse lookup for email by nickname (for each user's personal nicknames)
 const getUserEmailByNickname = (userId: string, nickname: string): string | undefined => {
   const userNicknames = personalNicknames.get(userId);
   if (!userNicknames) return undefined;
@@ -53,10 +106,8 @@ const getUserEmailByNickname = (userId: string, nickname: string): string | unde
   return undefined;
 };
 
-// Get nickname that a user uses for another user
 const getNicknameForUser = (userId: string, targetUserId: string): string => {
   const userNicknames = personalNicknames.get(userId);
-  // Try personal nickname, then fall back to email
   return userNicknames?.get(targetUserId) || targetUserId;
 };
 
@@ -103,21 +154,23 @@ class MyAugmentOSApp extends TpaServer {
         this.showMainMenu(session, userId);
       } else if (text === 'friends' || text === 'friend list') {
         this.showFriendsList(session, userId);
+      } else if (text === 'refresh contacts' || text === 'update contacts') {
+        // Manual refresh command
+        fetchContactsFromDB();
+        session.layouts.showTextWall("Refreshing contacts from database...");
       } else {
         // If in active chat, send message to chat partner
         const partnerId = activeChatSessions.get(userId);
         if (partnerId && activeSessions.has(partnerId)) {
           const partnerSession = activeSessions.get(partnerId)!;
-          const senderNickname = getNicknameForUser(partnerId, userId); // Get nickname as seen by partner
+          const senderNickname = getNicknameForUser(partnerId, userId);
           partnerSession.layouts.showTextWall(`${senderNickname}: ${data.text}`);
         }
       }
     });
 
-    // Add cleanup handler for transcription events
     this.addCleanupHandler(unsubscribe);
 
-    // Handle disconnection
     await new Promise<void>(resolve => {
       session.events.onDisconnected(() => {
         console.log(`User ${userId} disconnected`);
@@ -148,7 +201,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private showFriendsList(session: TpaSession, userId: string): void {
-    const userFriends = getFriends(userId); // Using new helper function
+    const userFriends = getFriends(userId);
     const onlineFriends = this.getOnlineFriends(userId);
     
     let message = `Your Friends:\n\n`;
@@ -170,7 +223,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private getOnlineFriends(userId: string): string[] {
-    const userFriends = getFriends(userId); // Using new helper function
+    const userFriends = getFriends(userId);
     const onlineFriends: string[] = [];
     
     userFriends.forEach(friendEmail => {
@@ -188,9 +241,8 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private handleChatRequest(fromUserId: string, targetNickname: string): void {
-    const userFriends = getFriends(fromUserId); // Using new helper function
+    const userFriends = getFriends(fromUserId);
     
-    // Find target email by nickname in user's personal nicknames
     const targetEmail = getUserEmailByNickname(fromUserId, targetNickname);
     
     if (!targetEmail) {
@@ -202,7 +254,6 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Check if target is in user's friend list
     if (!userFriends.includes(targetEmail)) {
       const session = activeSessions.get(fromUserId);
       if (session) {
@@ -220,7 +271,6 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Check mutual friendship using new helper function
     if (!areMutualFriends(fromUserId, targetEmail)) {
       const session = activeSessions.get(fromUserId);
       if (session) {
@@ -229,7 +279,6 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Check if either user is already in a chat
     if (activeChatSessions.has(fromUserId) || activeChatSessions.has(targetEmail)) {
       const session = activeSessions.get(fromUserId);
       if (session) {
@@ -238,17 +287,15 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Store the chat request
     const chatRequest: ChatRequest = {
       fromUserId,
       toUserId: targetEmail,
-      fromNickname: getNicknameForUser(targetEmail, fromUserId), // Nickname as seen by target
+      fromNickname: getNicknameForUser(targetEmail, fromUserId),
       timestamp: Date.now()
     };
 
     pendingChatRequests.set(targetEmail, chatRequest);
 
-    // Notify both users
     const fromSession = activeSessions.get(fromUserId);
     const toSession = activeSessions.get(targetEmail);
 
@@ -256,7 +303,7 @@ class MyAugmentOSApp extends TpaServer {
       let countdown = 30;
       const updateFrom = () => {
         if (!pendingChatRequests.has(targetEmail)) {
-          return; // Stop if request no longer exists
+          return;
         }
         fromSession.layouts.showTextWall(`Chat request sent to ${targetNickname}. Waiting for response... (${countdown}s)`);
         countdown--;
@@ -273,7 +320,7 @@ class MyAugmentOSApp extends TpaServer {
       let countdown = 30;
       const updateTo = () => {
         if (!pendingChatRequests.has(targetEmail)) {
-          return; // Stop if request no longer exists
+          return;
         }
         toSession.layouts.showTextWall(`Chat request from ${chatRequest.fromNickname}!\nSay "Accept" to accept or "Reject" to decline. (${countdown}s)`);
         countdown--;
@@ -297,23 +344,20 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Remove the pending request
     pendingChatRequests.delete(userId);
 
-    // Start the chat session
     activeChatSessions.set(chatRequest.fromUserId, userId);
     activeChatSessions.set(userId, chatRequest.fromUserId);
 
-    const userNickname = getNicknameForUser(chatRequest.fromUserId, userId); // Nickname as seen by requester
+    const userNickname = getNicknameForUser(chatRequest.fromUserId, userId);
     const fromSession = activeSessions.get(chatRequest.fromUserId);
     const toSession = activeSessions.get(userId);
 
-    // Clear the countdown messages first
     if (fromSession) {
-      fromSession.layouts.showTextWall(" "); // Clear the countdown message
+      fromSession.layouts.showTextWall(" ");
     }
     if (toSession) {
-      toSession.layouts.showTextWall(" "); // Clear the countdown message
+      toSession.layouts.showTextWall(" ");
     }
 
     if (fromSession) {
@@ -335,10 +379,9 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Remove the pending request
     pendingChatRequests.delete(userId);
 
-    const userNickname = getNicknameForUser(chatRequest.fromUserId, userId); // Nickname as seen by requester
+    const userNickname = getNicknameForUser(chatRequest.fromUserId, userId);
     const fromSession = activeSessions.get(chatRequest.fromUserId);
     const toSession = activeSessions.get(userId);
 
@@ -370,12 +413,11 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // End the chat for both users
     activeChatSessions.delete(userId);
     activeChatSessions.delete(partnerId);
 
-    const userNickname = getNicknameForUser(partnerId, userId); // Nickname as seen by partner
-    const partnerNickname = getNicknameForUser(userId, partnerId); // Nickname as seen by user
+    const userNickname = getNicknameForUser(partnerId, userId);
+    const partnerNickname = getNicknameForUser(userId, partnerId);
 
     const userSession = activeSessions.get(userId);
     const partnerSession = activeSessions.get(partnerId);
@@ -392,10 +434,8 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private handleUserDisconnect(userId: string): void {
-    // Remove from active sessions
     activeSessions.delete(userId);
 
-    // Handle if user was in a chat
     const partnerId = activeChatSessions.get(userId);
     if (partnerId) {
       activeChatSessions.delete(userId);
@@ -409,7 +449,6 @@ class MyAugmentOSApp extends TpaServer {
       }
     }
 
-    // Handle if user had pending chat requests
     const chatRequest = pendingChatRequests.get(userId);
     if (chatRequest) {
       pendingChatRequests.delete(userId);
@@ -421,7 +460,6 @@ class MyAugmentOSApp extends TpaServer {
       }
     }
 
-    // Remove any outgoing chat requests from this user
     pendingChatRequests.forEach((request, targetUserId) => {
       if (request.fromUserId === userId) {
         pendingChatRequests.delete(targetUserId);
@@ -434,9 +472,8 @@ class MyAugmentOSApp extends TpaServer {
       }
     });
 
-    // Notify remaining users who have this user as a friend about the disconnection
     activeSessions.forEach((session, remainingUserId) => {
-      const remainingUserFriends = getFriends(remainingUserId); // Using new helper function
+      const remainingUserFriends = getFriends(remainingUserId);
       if (remainingUserFriends.includes(userId)) {
         this.showMainMenu(session, remainingUserId);
       }
