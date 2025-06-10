@@ -18,4 +18,5 @@ __pycache__/
 node_modules
 static/qr_codes
 __pycache__
-node_modules
+node_modules/
+__pycache__/
