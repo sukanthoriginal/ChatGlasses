@@ -28,10 +28,6 @@ load_dotenv(dotenv_path=dotenv_path)
 AUGMENTOS_API_KEY = os.environ.get('DEV_AUGMENT_API_KEY')
 PACKAGE_NAME = os.environ.get('DEV_AUGMENT_PACKAGE')
 
-def sanitize_user_id(user_id):
-    """Sanitize user ID by replacing '@' and '.' with underscores."""
-    return user_id.replace('@', '_').replace('.', '_')
-
 
 def exchange_token_for_user_id(temp_token):
     """Exchange the temporary token for a user ID via the AugmentOS API"""
@@ -64,7 +60,7 @@ def exchange_token_for_user_id(temp_token):
         if response.status_code == 200:
             data = response.json()
             if data.get('success') and data.get('userId'):
-                return sanitize_user_id(data['userId'])
+                return data['userId']
             elif "max entries" in response.text.lower():
                 raise Exception("Rate limit reached: Maximum entries exceeded. Please try again later.")
             else:

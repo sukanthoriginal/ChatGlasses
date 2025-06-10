@@ -6,41 +6,39 @@ const PACKAGE_NAME = process.env.DEV_AUGMENT_PACKAGE as string;
 const API_KEY = process.env.DEV_AUGMENT_API_KEY as string;
 const PORT = 81;
 
-// Individual friend lists using email addresses (absolute userIds)
-const friendLists = new Map<string, string[]>([
-  ['ontelligency@gmail.com', ['optimistic.sukanth@gmail.com', 'xyz@gmail.com', 'david@gmail.com']],
-  ['optimistic.sukanth@gmail.com', ['ontelligency@gmail.com', 'xyz@gmail.com', 'abc@gmail.com', 'priya@gmail.com']],
-  ['abc@gmail.com', ['optimistic.sukanth@gmail.com']],
-  ['priya@gmail.com', ['optimistic.sukanth@gmail.com']],
-  ['xyz@gmail.com', ['ontelligency@gmail.com', 'optimistic.sukanth@gmail.com']],
-  ['david@gmail.com', ['ontelligency@gmail.com']]
-]);
-
-// Personal nickname mappings - each user can have their own nicknames for their friends
+// Single data structure - personal nickname mappings
+// If a user has a nickname for someone, they're friends
 const personalNicknames = new Map<string, Map<string, string>>([
+  ['john@example.com', new Map([
+    ['mom@family.com', "Mom"],
+    ['alice@example.com', "Alice (Sister)"],
+    ['bob@work.com', "Bob from Work"],
+  ])],
   ['ontelligency@gmail.com', new Map([
-    ['optimistic.sukanth@gmail.com', 'Girish'],
-    ['xyz@gmail.com', 'girlfriend'],
-    ['david@gmail.com', 'David']
+    ['optimistic.sukanth@gmail.com', "Girish"],
+    ['sukanth.electronom@gmail.com', "Girish's Girlfriend"],
   ])],
   ['optimistic.sukanth@gmail.com', new Map([
-    ['ontelligency@gmail.com', "John"],
-    ['xyz@gmail.com', "John's girlfriend"],
-    ['priya@gmail.com', 'priya']
+    ['ontelligency@gmail.com', "David"],
+    ['sukanth.electronom@gmail.com', "My Girlfriend"],
   ])],
-  ['abc@gmail.com', new Map([
-    ['optimistic.sukanth@gmail.com', 'Girish']
-  ])],
-  ['priya@gmail.com', new Map([
-    ['optimistic.sukanth@gmail.com', 'Girish']
-  ])],
-  ['xyz@gmail.com', new Map([
-    ['ontelligency@gmail.com', 'John']
-  ])],
-  ['david@gmail.com', new Map([
-    ['ontelligency@gmail.com', 'John']
-  ])]
 ]);
+
+// Helper functions derived from the single data structure
+
+// Get all friends of a user (anyone they have a nickname for)
+const getFriends = (userId: string): string[] => {
+  const userNicknames = personalNicknames.get(userId);
+  return userNicknames ? Array.from(userNicknames.keys()) : [];
+};
+
+// Check if two users are mutual friends
+const areMutualFriends = (userId1: string, userId2: string): boolean => {
+  const user1Nicknames = personalNicknames.get(userId1);
+  const user2Nicknames = personalNicknames.get(userId2);
+  
+  return !!(user1Nicknames?.has(userId2) && user2Nicknames?.has(userId1));
+};
 
 // Reverse lookup for email by nickname (for each user's personal nicknames)
 const getUserEmailByNickname = (userId: string, nickname: string): string | undefined => {
@@ -150,7 +148,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private showFriendsList(session: TpaSession, userId: string): void {
-    const userFriends = friendLists.get(userId) || [];
+    const userFriends = getFriends(userId); // Using new helper function
     const onlineFriends = this.getOnlineFriends(userId);
     
     let message = `Your Friends:\n\n`;
@@ -172,7 +170,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private getOnlineFriends(userId: string): string[] {
-    const userFriends = friendLists.get(userId) || [];
+    const userFriends = getFriends(userId); // Using new helper function
     const onlineFriends: string[] = [];
     
     userFriends.forEach(friendEmail => {
@@ -190,7 +188,7 @@ class MyAugmentOSApp extends TpaServer {
   }
 
   private handleChatRequest(fromUserId: string, targetNickname: string): void {
-    const userFriends = friendLists.get(fromUserId) || [];
+    const userFriends = getFriends(fromUserId); // Using new helper function
     
     // Find target email by nickname in user's personal nicknames
     const targetEmail = getUserEmailByNickname(fromUserId, targetNickname);
@@ -222,9 +220,8 @@ class MyAugmentOSApp extends TpaServer {
       return;
     }
 
-    // Check if the target user also has the sender as a friend (mutual friendship)
-    const targetFriends = friendLists.get(targetEmail) || [];
-    if (!targetFriends.includes(fromUserId)) {
+    // Check mutual friendship using new helper function
+    if (!areMutualFriends(fromUserId, targetEmail)) {
       const session = activeSessions.get(fromUserId);
       if (session) {
         session.layouts.showTextWall(`You can only chat with mutual friends. ${targetNickname} doesn't have you in their friend list.`);
@@ -439,7 +436,7 @@ class MyAugmentOSApp extends TpaServer {
 
     // Notify remaining users who have this user as a friend about the disconnection
     activeSessions.forEach((session, remainingUserId) => {
-      const remainingUserFriends = friendLists.get(remainingUserId) || [];
+      const remainingUserFriends = getFriends(remainingUserId); // Using new helper function
       if (remainingUserFriends.includes(userId)) {
         this.showMainMenu(session, remainingUserId);
       }
