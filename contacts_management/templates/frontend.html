@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .contact { padding: 10px; border: 1px solid #ddd; margin: 5px 0; }
+        .blocked { background-color: #ffebee; }
+        input, button { margin: 5px; padding: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .form-group { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Contacts Manager</h1>
+<div style="font-size: 14px; font-family: sans-serif; white-space: pre-wrap; background: #f9f9f9; padding: 1em; border-radius: 8px; width: fit-content; max-width: 400px;">
+• Say 'Chat [friend name]' to start a chat  
+• Say 'Accept' to accept incoming chat requests  
+• Say 'Reject' to reject incoming chat requests  
+• Say 'End chat' to end current chat  
+• Say 'Friends' to see your full friend list  
+• Say 'Menu' to show menu
+</div>
+    
+    <div id="message"></div>
+    
+    <!-- Add Contact Form -->
+    <div class="form-group">
+        <h3>Add New Contact</h3>
+        <input type="email" id="newEmail" placeholder="Contact Email" required>
+        <input type="text" id="newNickname" placeholder="Nickname" required>
+        <button onclick="addContact()">Add Contact</button>
+    </div>
+    
+    <!-- Contacts List -->
+    <div id="contacts">
+        <h3>Your Contacts</h3>
+        <div id="contactsList"></div>
+    </div>
+
+    <script>
+        let contacts = [];
+
+        // Fetch and display contacts
+        async function loadContacts() {
+            try {
+                const response = await fetch('/api/get_contacts');
+                if (response.ok) {
+                    contacts = await response.json();
+                    displayContacts();
+                } else {
+                    showMessage('Failed to load contacts', 'error');
+                }
+            } catch (error) {
+                showMessage('Error loading contacts: ' + error.message, 'error');
+            }
+        }
+
+        // Display contacts in HTML
+        function displayContacts() {
+            const container = document.getElementById('contactsList');
+            container.innerHTML = '';
+            
+            contacts.forEach(contact => {
+                const div = document.createElement('div');
+                div.className = 'contact' + (contact.is_blocked ? ' blocked' : '');
+                
+                div.innerHTML = `
+                    <strong>${contact.nickname}</strong> - ${contact.contact_email}
+                    ${contact.is_blocked ? '<span style="color: red;">[BLOCKED]</span>' : ''}
+                    <br>
+                    <input type="text" id="nick_${contact.contact_email.replace('@', '_').replace('.', '_')}" 
+                           value="${contact.nickname}" placeholder="New nickname">
+                    <button onclick="updateNickname('${contact.contact_email}')">Update</button>
+                    <button onclick="toggleBlock('${contact.contact_email}', ${contact.is_blocked})">
+                        ${contact.is_blocked ? 'Unblock' : 'Block'}
+                    </button>
+                    <button onclick="removeContact('${contact.contact_email}')" style="color: red;">Remove</button>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Add new contact
+        async function addContact() {
+            const email = document.getElementById('newEmail').value;
+            const nickname = document.getElementById('newNickname').value;
+            
+            if (!email || !nickname) {
+                showMessage('Please fill in both email and nickname', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/add_contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_email: email, nickname: nickname })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Contact added successfully!', 'success');
+                    document.getElementById('newEmail').value = '';
+                    document.getElementById('newNickname').value = '';
+                    loadContacts();
+                } else {
+                    showMessage(result.message || 'Failed to add contact', 'error');
+                }
+            } catch (error) {
+                showMessage('Error adding contact: ' + error.message, 'error');
+            }
+        }
+
+        // Update nickname
+        async function updateNickname(contactEmail) {
+            const inputId = 'nick_' + contactEmail.replace('@', '_').replace('.', '_');
+            const newNickname = document.getElementById(inputId).value;
+            
+            if (!newNickname) {
+                showMessage('Please enter a nickname', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/update_nickname', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_email: contactEmail, new_nickname: newNickname })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Nickname updated!', 'success');
+                    loadContacts();
+                } else {
+                    showMessage(result.message || 'Failed to update nickname', 'error');
+                }
+            } catch (error) {
+                showMessage('Error updating nickname: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle block/unblock
+        async function toggleBlock(contactEmail, isBlocked) {
+            const action = isBlocked ? 'unblock' : 'block';
+            
+            try {
+                const response = await fetch(`/api/${action}_contact/${contactEmail}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`Contact ${action}ed successfully!`, 'success');
+                    loadContacts();
+                } else {
+                    showMessage(result.message || `Failed to ${action} contact`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Error ${action}ing contact: ` + error.message, 'error');
+            }
+        }
+
+        // Remove contact
+        async function removeContact(contactEmail) {
+            if (!confirm('Are you sure you want to remove this contact?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/remove_contact/${contactEmail}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('Contact removed successfully!', 'success');
+                    loadContacts();
+                } else {
+                    showMessage(result.message || 'Failed to remove contact', 'error');
+                }
+            } catch (error) {
+                showMessage('Error removing contact: ' + error.message, 'error');
+            }
+        }
+
+        // Show message to user
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 3000);
+        }
+
+        // Load contacts when page loads
+        window.onload = loadContacts;
+    </script>
+</body>
+</html>
