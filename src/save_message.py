@@ -3,8 +3,6 @@ from datetime import datetime
 import os
 from supabase import create_client
 from dotenv import load_dotenv
-from collections import defaultdict
-import json
 
 def init_supabase():
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -20,12 +18,23 @@ def init_supabase():
     return create_client(supabase_url, supabase_service)
 
 def save_message(chat_id, user_id, message):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    supabase = init_supabase()
+    timestamp = datetime.now().isoformat()
 
-    formatted_message = f"[{timestamp}] CHAT_ID={chat_id} USER_ID={user_id} MESSAGE={message}\n"
+    response = supabase.table("messages").insert({
+        "chat_id": chat_id,
+        "user_id": user_id,
+        "message": message,
+        "timestamp": timestamp
+    }).execute()
 
-    with open("chat_history.txt", "a", encoding="utf-8") as f:
-        f.write(formatted_message)
+    if hasattr(response, "error") and response.error:
+        print("Error saving message:", response.error)
+    else:
+        print("Message saved successfully.")
 
 if __name__ == '__main__':
-    save_message(sys.argv[1], sys.argv[2], sys.argv[3])
+    if len(sys.argv) < 4:
+        print("Usage: python save_message.py <chat_id> <user_id> <message>")
+    else:
+        save_message(sys.argv[1], sys.argv[2], sys.argv[3])
