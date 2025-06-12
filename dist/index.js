@@ -99,6 +99,12 @@ const activeSessions = new Map();
 const pendingChatRequests = new Map();
 const activeChatSessions = new Map(); // userId -> partnerId
 class MyAugmentOSApp extends sdk_1.TpaServer {
+    constructor() {
+        super(...arguments);
+        // Message storage properties
+        this.conversationBuffers = new Map();
+        this.messageTimers = new Map();
+    }
     async onSession(session, sessionId, userId) {
         console.log(`User ${userId} connected with session ${sessionId}`);
         // Store the session
@@ -106,7 +112,7 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         // Show initial message with user's friends
         this.showMainMenu(session, userId);
         // Subscribe to transcription events for chat commands
-        const unsubscribe = session.events.onTranscription((data) => {
+        const unsubscribe = session.events.onTranscription(async (data) => {
             const text = data.text.toLowerCase().trim();
             console.log(`Command from user ${userId}: ${data.text}`);
             // Handle chat commands
@@ -135,13 +141,8 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
                 session.layouts.showTextWall("Refreshing contacts from database...");
             }
             else {
-                // If in active chat, send message to chat partner
-                const partnerId = activeChatSessions.get(userId);
-                if (partnerId && activeSessions.has(partnerId)) {
-                    const partnerSession = activeSessions.get(partnerId);
-                    const senderNickname = getNicknameForUser(partnerId, userId);
-                    partnerSession.layouts.showTextWall(`${senderNickname}: ${data.text}`);
-                }
+                // If in active chat, handle the message
+                await this.handleChatMessage(userId, data.text);
             }
         });
         this.addCleanupHandler(unsubscribe);
@@ -152,6 +153,92 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
                 resolve();
             });
         });
+    }
+    async saveCompletedMessage(chatId, userId, message) {
+        try {
+            const { spawn } = require('child_process');
+            const python = spawn('python', ['src/save_message.py', chatId, userId, message]);
+            python.stderr.on('data', (data) => {
+                console.error(`Save message error: ${data}`);
+            });
+            python.on('close', (code) => {
+                if (code === 0) {
+                    console.log(`✅ Message saved for chat ${chatId}`);
+                }
+                else {
+                    console.error(`❌ Failed to save message, exit code: ${code}`);
+                }
+            });
+        }
+        catch (error) {
+            console.error('❌ Failed to spawn save message process:', error);
+        }
+    }
+    async handleChatMessage(userId, text) {
+        const partnerId = activeChatSessions.get(userId);
+        if (!partnerId || !activeSessions.has(partnerId))
+            return;
+        // Get or create buffer for this user
+        const buffer = this.conversationBuffers.get(userId) || {
+            userId,
+            partnerId,
+            buffer: '',
+            lastUpdate: Date.now()
+        };
+        // Replace buffer content (don't append - speech recognition sends refined versions)
+        buffer.buffer = text;
+        buffer.lastUpdate = Date.now();
+        // Check for natural completion (ends with punctuation)
+        const isComplete = /[.!?]\s*$/.test(text.trim());
+        if (isComplete) {
+            // Natural completion - save immediately
+            const chatId = [userId, partnerId].sort().join('_');
+            await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
+            buffer.buffer = ''; // Clear buffer
+            // Clear any existing timer since we completed naturally
+            const existingTimer = this.messageTimers.get(userId);
+            if (existingTimer) {
+                clearTimeout(existingTimer);
+                this.messageTimers.delete(userId);
+            }
+        }
+        else {
+            // No natural completion - set timeout for artificial completion
+            const existingTimer = this.messageTimers.get(userId);
+            if (existingTimer)
+                clearTimeout(existingTimer);
+            const timer = setTimeout(async () => {
+                if (buffer.buffer.trim()) {
+                    const chatId = [userId, partnerId].sort().join('_');
+                    await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
+                    buffer.buffer = ''; // Clear buffer
+                    this.conversationBuffers.set(userId, buffer);
+                }
+            }, 3000); // 3 seconds timeout
+            this.messageTimers.set(userId, timer);
+        }
+        // Update buffer
+        this.conversationBuffers.set(userId, buffer);
+        // Show message to partner immediately (real-time display)
+        const partnerSession = activeSessions.get(partnerId);
+        const senderNickname = getNicknameForUser(partnerId, userId);
+        partnerSession.layouts.showTextWall(`${senderNickname}: ${text}`);
+    }
+    cleanupUserBuffers(userId) {
+        // Clear any pending timer
+        const timer = this.messageTimers.get(userId);
+        if (timer) {
+            clearTimeout(timer);
+            this.messageTimers.delete(userId);
+        }
+        // Save any remaining buffered message
+        const buffer = this.conversationBuffers.get(userId);
+        if (buffer && buffer.buffer.trim()) {
+            const chatId = [userId, buffer.partnerId].sort().join('_');
+            this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
+        }
+        // Clear buffer
+        this.conversationBuffers.delete(userId);
     }
     cleanInput(text) {
         return text.replace(/[.,!?;:]$/, '').trim();
@@ -347,6 +434,9 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
             }
             return;
         }
+        // Clean up buffers and timers
+        this.cleanupUserBuffers(userId);
+        this.cleanupUserBuffers(partnerId);
         activeChatSessions.delete(userId);
         activeChatSessions.delete(partnerId);
         const userNickname = getNicknameForUser(partnerId, userId);
@@ -363,6 +453,8 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
         }
     }
     handleUserDisconnect(userId) {
+        // Clean up buffers
+        this.cleanupUserBuffers(userId);
         activeSessions.delete(userId);
         const partnerId = activeChatSessions.get(userId);
         if (partnerId) {

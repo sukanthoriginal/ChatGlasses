@@ -261,6 +261,72 @@ class ContactsManager:
         except Exception as e:
             print(f"❌ Error getting nickname: {e}")
             return None
+    
+    def get_conversation_history(self, user_email: str, contact_email: str, limit: int = 50) -> List[Dict]:
+        """
+        Get conversation history between user and contact
+        
+        Args:
+            user_email: Email of the user
+            contact_email: Email of the contact
+            limit: Number of messages to retrieve (default 50)
+            
+        Returns:
+            List of message dictionaries ordered by timestamp
+        """
+        try:
+            # Create chat_id by sorting emails alphabetically
+            emails = sorted([user_email, contact_email])
+            chat_id = f"{emails[0]}_{emails[1]}"
+            print(chat_id)
+            
+            result = self.supabase.table('messages').select('*').eq('chat_id', chat_id).order('timestamp', desc=False).limit(limit).execute()
+            
+            return result.data
+            
+        except Exception as e:
+            print(f"❌ Error getting conversation history: {e}")
+            return []
+
+    def delete_message_permanently(self, user_email: str, message_id: str) -> bool:
+        """
+        Permanently delete a message that the user sent (for everyone)
+        
+        Args:
+            user_email: Email of the user requesting deletion
+            message_id: ID of the message to delete
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # First, check if the message exists and was sent by this user
+            result = self.supabase.table('messages').select('*').eq('id', message_id).execute()
+            
+            if not result.data:
+                print(f"❌ Message not found: {message_id}")
+                return False
+            
+            message = result.data[0]
+            
+            # Check if the user is the sender of this message
+            if message['user_id'] != user_email:
+                print(f"❌ User {user_email} not authorized to delete message {message_id} - not the sender")
+                return False
+            
+            # Permanently delete the message from the database
+            delete_result = self.supabase.table('messages').delete().eq('id', message_id).execute()
+            
+            if delete_result.data:
+                print(f"✅ Message {message_id} permanently deleted by {user_email}")
+                return True
+            else:
+                print(f"❌ Failed to delete message")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error deleting message: {e}")
+            return False
 
 # Create a global instance to use in convenience functions
 _contacts_manager = ContactsManager()
@@ -303,6 +369,9 @@ def main():
     print("\n6. Getting nickname...")
     nickname = contacts.get_nickname("john@example.com", "mom@family.com")
     print(f"   Nickname for mom@family.com: {nickname}")
+
+    convo_history = contacts.get_conversation_history("optimistic.sukanth@gmail.com", "ontelligency@gmail.com")
+    print(convo_history)
 
 # Convenience functions (as requested)
 def add_friend(user_email: str, friend_email: str, friend_nickname: str) -> bool:

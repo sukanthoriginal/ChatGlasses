@@ -1,4 +1,3 @@
-# contacts_frontend.py
 #!/usr/bin/env python3
 import os
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
@@ -190,6 +189,18 @@ def remove_contact(contact_email):
     
     return redirect(url_for('contacts'))
 
+@app.route('/api/get_conversation/<contact_email>')
+def get_conversation_api(contact_email):
+    if not is_authenticated():
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    user_id = session['user_id']
+    limit = request.args.get('limit', 50, type=int)
+    
+    messages = contacts_manager.get_conversation_history(user_id, contact_email, limit)
+    print(messages)
+    return jsonify({'success': True, 'messages': messages})
+
 @app.route('/logout')
 def logout():
     session.pop('user_email', None)
@@ -307,6 +318,42 @@ def remove_contact_api(contact_email):
     if contacts_manager.remove_contact(user_id, contact_email):
         return jsonify({'success': True, 'message': 'Contact removed successfully!'})
     return jsonify({'success': False, 'message': 'Failed to remove contact'})
+
+@app.route('/contacts')
+def contacts():
+    """Redirect to proper contacts view"""
+    if not is_authenticated():
+        return redirect(url_for('webview'))
+    
+    # Get fresh contacts list
+    user_id = session['user_id']
+    contacts_list = contacts_manager.get_contacts(user_id)
+    
+    # Check if request comes from webview
+    if 'WebView' in request.headers.get('User-Agent', ''):
+        return render_template('mobile_contacts.html', contacts=contacts_list)
+    else:
+        return render_template('frontend.html', contacts=contacts_list)
+    
+    
+@app.route('/chat_history')
+def chat_history():
+    """Serve the chat history page"""
+    if not is_authenticated():
+        return redirect(url_for('webview'))
+    
+    return render_template('chat_history.html')
+
+@app.route('/api/delete_message/<message_id>', methods=['POST'])
+def delete_message_api(message_id):
+    """Delete a message permanently (only if user is the sender)"""
+    if not is_authenticated():
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    user_id = session['user_id']
+    if contacts_manager.delete_message_permanently(user_id, message_id):
+        return jsonify({'success': True, 'message': 'Message deleted permanently!'})
+    return jsonify({'success': False, 'message': 'Failed to delete message - you can only delete your own messages'})
 
 if __name__ == "__main__":
     # Run the Flask application on port 96

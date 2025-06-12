@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    :root {
+        --container-background-color: rgb(0, 0, 0);
+        --container-border-radius: 25px;
+        --container-padding: 20px;
+        --text-color: #004d40;
+        --heading-color: #72ffda;
+        --heading-border-color: #20c997;
+        --contact-background: #72ffda;
+        --contact-border-color: #20c997;
+        --contact-blocked-border-color: #ff5252;
+        --contact-blocked-background: rgba(255, 82, 82, 0.1);
+        --timestamp-color: #006d52;
+        --user-id-color: #20c997;
+        --button-background-color: rgba(32, 201, 151, 0.7);
+        --button-text-color: #004d40;
+        --button-border-color: #20c997;
+        --button-shadow-color: rgba(32, 201, 151, 0.3);
+        --button-hover-color: rgba(0, 109, 76, 0.9);
+        --input-background: rgba(0, 77, 64, 0.8);
+        --input-text-color: #20c997;
+        --input-border-color: #20c997;
+        --input-box-shadow: 0 0 15px rgba(32, 201, 151, 0.3);
+        --success-background: rgba(0, 184, 148, 0.15);
+        --success-color: #00b894;
+        --success-border: #00897b;
+        --error-background: rgba(255, 82, 82, 0.2);
+        --error-color: #ff5252;
+        --error-border: #ff1744;
+        --pulse-color-light: rgba(32, 201, 151, 0.5);
+        --pulse-color-dark: rgba(32, 201, 151, 0.8);
+        --container-background-blur: 10px;
+        --container-background-opacity: 0.025;
+        --contact-background-blur: 8px;
+        --contact-background-opacity: 0.75;
+        --message-user-background: rgba(114, 255, 218, 0.8);
+        --message-contact-background: rgba(0, 77, 64, 0.6);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Montserrat', sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background-color: transparent;
+        color: var(--text-color);
+        text-align: center;
+        box-sizing: border-box;
+        background-image: 
+            linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+            url('https://raw.githubusercontent.com/Sukanth-Original/What-did-you-get-done/refs/heads/master/gif_background.gif');    
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: rgba(0, 0, 0, var(--container-background-opacity));
+        border-radius: var(--container-border-radius);
+        backdrop-filter: blur(var(--container-background-blur));
+        -webkit-backdrop-filter: blur(var(--container-background-blur));
+        box-shadow: 0 0 20px rgba(224, 247, 250, 0.1);
+        overflow: hidden;
+        text-align: left;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--container-padding);
+        background: rgba(114, 255, 218, 0.1);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(32, 201, 151, 0.3);
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 1.8em;
+        color: var(--heading-color);
+        text-shadow: 0 0 10px var(--heading-border-color),
+                     0 0 20px rgba(100, 255, 237, 0.3),
+                     0 0 30px rgba(100, 255, 237, 0.2);
+        font-style: italic;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .nav-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Improved Button Styling */
+    .control-btn {
+        background: rgba(0, 77, 64, 0.9);
+        color: #72ffda;
+        border: 1px solid rgba(32, 201, 151, 0.6);
+        padding: 10px 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+        font-size: 13px;
+        letter-spacing: 0.3px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .control-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(114, 255, 218, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .control-btn:hover::before {
+        left: 100%;
+    }
+
+    .control-btn:hover {
+        background: rgba(32, 201, 151, 0.15);
+        color: #72ffda;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(32, 201, 151, 0.25);
+        border-color: rgba(114, 255, 218, 0.8);
+    }
+
+    .control-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+    }
+
+    .search-container {
+        width: 100%;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 12px 20px;
+        border: 2px solid rgba(32, 201, 151, 0.6);
+        border-radius: 15px;
+        background: rgba(0, 77, 64, 0.3);
+        color: #72ffda;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        outline: none;
+        box-shadow: 0 2px 15px rgba(32, 201, 151, 0.1);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .search-box::placeholder {
+        color: rgba(114, 255, 218, 0.6);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+    }
+
+    .search-box:focus {
+        border-color: #72ffda;
+        box-shadow: 0 0 25px rgba(32, 201, 151, 0.3);
+        background: rgba(0, 77, 64, 0.4);
+    }
+
+    .conversation {
+        padding: var(--container-padding);
+        max-height: 550px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .conversation::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .conversation::-webkit-scrollbar-track {
+        background: rgba(0, 77, 64, 0.2);
+        border-radius: 10px;
+    }
+
+    .conversation::-webkit-scrollbar-thumb {
+        background: rgba(32, 201, 151, 0.5);
+        border-radius: 10px;
+        border: 2px solid rgba(0, 77, 64, 0.2);
+    }
+
+    .conversation::-webkit-scrollbar-thumb:hover {
+        background: rgba(32, 201, 151, 0.8);
+    }
+
+    .message {
+        margin: 15px 0;
+        padding: 15px 20px;
+        border-radius: 20px;
+        position: relative;
+        max-width: 70%;
+        word-wrap: break-word;
+        animation: fadeIn 0.3s ease-in;
+        backdrop-filter: blur(var(--contact-background-blur));
+        -webkit-backdrop-filter: blur(var(--contact-background-blur));
+        box-shadow: 0 0 15px rgba(32, 201, 151, 0.2);
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.9); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
+    }
+
+    .message:hover {
+        box-shadow: 0 0 25px rgba(32, 201, 151, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .message.user {
+        background: var(--message-user-background);
+        color: var(--button-text-color);
+        margin-left: auto;
+        border-bottom-right-radius: 5px;
+        border-left: 3px solid var(--contact-border-color);
+    }
+
+    .message.contact {
+        background: var(--message-contact-background);
+        color: #20c997;
+        margin-right: auto;
+        border-bottom-left-radius: 5px;
+        border-right: 3px solid var(--contact-border-color);
+    }
+
+    .message.hidden {
+        display: none;
+    }
+
+    .message-content {
+        margin-bottom: 8px;
+        line-height: 1.5;
+        font-weight: 400;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .timestamp {
+        font-size: 0.75em;
+        text-align: right;
+        opacity: 0.8;
+        font-style: italic;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+    }
+
+    .message.user .timestamp {
+        color: var(--timestamp-color);
+    }
+
+    .message.contact .timestamp {
+        color: #72ffda;
+    }
+
+    .message.contact .message-actions {
+        display: none !important;
+    }
+
+    .sender-name {
+        font-weight: 600;
+        font-size: 0.9em;
+        margin-bottom: 6px;
+        text-shadow: 0 0 5px rgba(32, 201, 151, 0.3);
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .message.user .sender-name {
+        color: var(--timestamp-color);
+    }
+
+    .message.contact .sender-name {
+        color: var(--heading-color);
+    }
+
+    .success {
+        color: var(--success-color);
+        background: var(--success-background);
+        border: 1px solid var(--success-border);
+        box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 15px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .error {
+        color: var(--error-color);
+        background: var(--error-background);
+        border: 1px solid var(--error-border);
+        box-shadow: 0 0 15px rgba(255, 82, 82, 0.2);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 15px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .message-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .message:hover .message-actions {
+        opacity: 1;
+    }
+
+    .delete-btn {
+        background: rgba(255, 82, 82, 0.8);
+        color: white;
+        border: 2px solid #ff1744;
+        padding: 6px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+    }
+
+    .delete-btn:hover {
+        background: #ff1744;
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
+    }
+
+    .date-separator {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: var(--heading-color);
+    position: relative;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(32, 201, 151, 0.3);
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap; /* Add this line */
+}
+
+    .date-separator::before,
+    .date-separator::after {
+        content: '';
+        display: inline-block;
+        width: 30%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--contact-border-color), transparent);
+        vertical-align: middle;
+        margin: 0 15px;
+        border-radius: 2px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--heading-color);
+        background: rgba(114, 255, 218, 0.1);
+        border-radius: 20px;
+        border-left: 3px solid var(--contact-border-color);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.7;
+        text-shadow: 0 0 10px var(--heading-border-color);
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--heading-color);
+        background: rgba(114, 255, 218, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .stats {
+        display: none !important;
+    }
+
+    #message {
+        padding: 0 var(--container-padding);
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 10px var(--pulse-color-light);
+        }
+        50% {
+            box-shadow: 0 0 25px var(--pulse-color-dark);
+        }
+        100% {
+            box-shadow: 0 0 10px var(--pulse-color-light);
+        }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+
+        .container {
+            border-radius: 15px;
+        }
+
+        .header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+            padding: 15px;
+            align-items: stretch;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            text-align: center;
+            flex: none;
+            min-width: unset;
+        }
+
+        .nav-controls {
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: 36px;
+            flex: 1;
+            max-width: 80px;
+        }
+
+        .search-container {
+            margin-top: 10px;
+        }
+
+        .search-box {
+            font-size: 13px;
+            padding: 10px 16px;
+        }
+
+        .conversation {
+            padding: 15px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+        }
+
+        .message-actions {
+            top: 5px;
+            right: 5px;
+        }
+
+        .delete-btn {
+            width: 24px;
+            height: 24px;
+            font-size: 10px;
+        }
+    }
+</style>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="chatTitle">Chat History</h1>
+            <div class="nav-controls">
+                <a href="/contacts" class="control-btn">Back</a>
+                <button class="control-btn" onclick="refreshConversation()">Refresh</button>
+                <button class="control-btn" onclick="scrollToBottom()">Latest</button>
+                <button class="control-btn" onclick="toggleSearchBar()">Search</button>
+            </div>
+            <div id="searchContainer" class="search-container">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search messages..." onkeyup="searchMessages()">
+            </div>
+
+            <div class="stats">
+                <span id="messageCount">Messages: 0</span>
+                <span id="dateRange">Date range: -</span>
+            </div>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div id="conversation" class="conversation">
+            <div class="loading">
+                <div>Loading conversation...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let contactEmail = '';
+        let contactNickname = '';
+        let allMessages = [];
+        let filteredMessages = [];
+
+        // Get URL parameters
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            contactEmail = params.get('contact') || '';
+            contactNickname = params.get('nickname') || contactEmail;
+            
+            document.getElementById('chatTitle').textContent = `Chat with ${contactNickname}`;
+        }
+
+        // Format date to user-friendly format
+        function formatDateToUserFriendly(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+
+            const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+            return date.toLocaleTimeString(undefined, timeOptions);
+        }
+
+        // Search messages
+        function searchMessages() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            if (searchTerm === '') {
+                filteredMessages = [...allMessages];
+            } else {
+                filteredMessages = allMessages.filter(msg => 
+                    msg.message.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            displayConversation(filteredMessages);
+            updateStats();
+        }
+
+        // Refresh conversation
+        async function refreshConversation() {
+            showMessage('Refreshing...', 'success');
+            await loadConversation();
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            const conversation = document.getElementById('conversation');
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const messageCount = filteredMessages.length;
+            document.getElementById('messageCount').textContent = `Messages: ${messageCount}`;
+            
+            if (messageCount > 0) {
+                const dates = filteredMessages.map(msg => new Date(msg.timestamp)).sort();
+                const firstDate = dates[0].toLocaleDateString();
+                const lastDate = dates[dates.length - 1].toLocaleDateString();
+                
+                if (firstDate === lastDate) {
+                    document.getElementById('dateRange').textContent = `Date: ${firstDate}`;
+                } else {
+                    document.getElementById('dateRange').textContent = `From: ${firstDate} to ${lastDate}`;
+                }
+            } else {
+                document.getElementById('dateRange').textContent = 'Date range: -';
+            }
+        }
+
+        function toggleSearchBar() {
+            const container = document.getElementById('searchContainer');
+            const input = document.getElementById('searchBox');
+
+            if (container.style.display === 'none' || !container.style.display) {
+                container.style.display = 'block';
+                setTimeout(() => input.focus(), 100);
+            } else {
+                container.style.display = 'none';
+                input.value = '';
+                searchMessages(); // Reset search
+            }
+        }
+
+        // Load conversation history
+        async function loadConversation() {
+            if (!contactEmail) {
+                showMessage('No contact specified', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/get_conversation/${contactEmail}`);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        allMessages = result.messages || [];
+                        filteredMessages = [...allMessages];
+                        displayConversation(filteredMessages);
+                        updateStats();
+                        
+                        // Auto-scroll to bottom for new conversations
+                        setTimeout(scrollToBottom, 100);
+                    } else {
+                        document.getElementById('conversation').innerHTML = 
+                            '<div class="empty-state"><div class="empty-state-icon">❌</div><div>Failed to load conversation</div></div>';
+                    }
+                } else {
+                    document.getElementById('conversation').innerHTML = 
+                        '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>Error loading conversation</div></div>';
+                }
+            } catch (error) {
+                document.getElementById('conversation').innerHTML = 
+                    `<div class="empty-state"><div class="empty-state-icon">🔌</div><div>Connection Error: ${error.message}</div></div>`;
+            }
+        }
+
+        // Display conversation messages
+        function displayConversation(messages) {
+            const container = document.getElementById('conversation');
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <div>No conversation history</div>
+                        <div style="font-size: 0.9em; margin-top: 8px; opacity: 0.7;">
+                            Start a conversation to see messages here
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            // sort by timestamp ascending
+            messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            let lastDay = null;
+            const html = messages.map(msg => {
+                const date = new Date(msg.timestamp);
+                // determine label
+                const now = new Date();
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+
+                let dayLabel;
+                if (date.toDateString() === now.toDateString()) {
+                    dayLabel = 'Today';
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    dayLabel = 'Yesterday';
+                } else {
+                    // e.g. "10 Jun 2025"
+                    dayLabel = date.toLocaleDateString(undefined, {
+                        day: 'numeric', month: 'short', year: 'numeric'
+                    });
+                }
+
+                // insert separator if day changed
+                let separatorHTML = '';
+                if (dayLabel !== lastDay) {
+                    separatorHTML = `<div class="date-separator">${dayLabel}</div>`;
+                    lastDay = dayLabel;
+                }
+
+                const isUser = msg.user_id !== contactEmail;
+                const senderName = isUser ? "You" : contactNickname;
+                const cls = isUser ? "user" : "contact";
+
+                // just time
+                const timeStr = date.toLocaleTimeString(undefined,
+                    { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                const msgHTML = `
+                    <div class="message ${cls}" data-message-id="${msg.id}">
+                        <div class="message-actions">
+                            <button class="delete-btn"
+                                onclick="deleteMessage('${msg.id}')">×</button>
+                        </div>
+                        <div class="sender-name">${senderName}</div>
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                        <div class="timestamp">${timeStr}</div>
+                    </div>`;
+
+                return separatorHTML + msgHTML;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function formatDateHeader(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
+
+            if (date.toDateString() === now.toDateString()) return 'Today';
+            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return date.toLocaleDateString(undefined, options);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Delete individual message
+        async function deleteMessage(messageId) {
+            // 1. Confirm deletion
+            if (!confirm('Delete this message?\n\nNote: This will permanently delete the message for everyone.')) {
+                return;
+            }
+            
+            try {
+                // 2. Call backend
+                const response = await fetch(`/api/delete_message/${messageId}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 3a. Optimistically remove from DOM
+                    const el = document.querySelector(`.message[data-message-id="${messageId}"]`);
+                    if (el) el.remove();
+                    
+                    // 3b. Update your in-memory arrays
+                    allMessages = allMessages.filter(msg => msg.id !== messageId);
+                    filteredMessages = filteredMessages.filter(msg => msg.id !== messageId);
+                    
+                    // 3c. Recompute stats display
+                    updateStats();
+                    
+                    // 3d. Show success toast
+                    showMessage('Message deleted successfully!', 'success');
+                } else {
+                    // Backend reported failure
+                    showMessage(`${result.message || 'Failed to delete message'}`, 'error');
+                }
+            } catch (error) {
+                // Network or parsing error
+                showMessage('Error deleting message: ' + error.message, 'error');
+            }
+        }
+
+        // Clear all history for current user
+        async function clearAllHistory() {
+            if (!confirm(`Clear all chat history with ${contactNickname}?\n\nNote: This action cannot be undone.`)) {
+                return;
+            }
+            
+            // Since the API endpoint doesn't exist in backend, show a message
+            showMessage('Clear all history feature is not yet implemented in the backend. You can delete individual messages for now.', 'error');
+        }
+
+        // Show message to user
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+
+        // Initialize page
+        window.onload = function() {
+            getUrlParams();
+            loadConversation();
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                    e.preventDefault();
+                    refreshConversation();
+                }
+                if (e.key === 'End' || (e.ctrlKey && e.key === 'ArrowDown')) {
+                    scrollToBottom();
+                }
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    toggleSearchBar();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
