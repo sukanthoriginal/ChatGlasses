@@ -190,6 +190,18 @@ def remove_contact(contact_email):
     
     return redirect(url_for('contacts'))
 
+@app.route('/api/get_conversation/<contact_email>')
+def get_conversation_api(contact_email):
+    if not is_authenticated():
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+    
+    user_id = session['user_id']
+    limit = request.args.get('limit', 50, type=int)
+    
+    messages = contacts_manager.get_conversation_history(user_id, contact_email, limit)
+    print(messages)
+    return jsonify({'success': True, 'messages': messages})
+
 @app.route('/logout')
 def logout():
     session.pop('user_email', None)
