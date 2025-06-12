@@ -70,4 +70,4 @@ ChatGlasses transforms your smart glasses into a hands-free communication device
 
 ---
 
-*A Sukanth Original Design & Development
+A Sukanth Original Design & Development
