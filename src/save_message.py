@@ -3,6 +3,8 @@ from datetime import datetime
 import os
 from supabase import create_client
 from dotenv import load_dotenv
+from datetime import datetime, timezone
+
 
 def init_supabase():
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -19,7 +21,7 @@ def init_supabase():
 
 def save_message(chat_id, user_id, message):
     supabase = init_supabase()
-    timestamp = datetime.now().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     response = supabase.table("messages").insert({
         "chat_id": chat_id,

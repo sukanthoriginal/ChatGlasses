@@ -206,56 +206,62 @@ class MyAugmentOSApp extends TpaServer {
     }
   }
 
-  private async handleChatMessage(userId: string, text: string): Promise<void> {
-    const partnerId = activeChatSessions.get(userId);
-    if (!partnerId || !activeSessions.has(partnerId)) return;
+ private async handleChatMessage(userId: string, text: string): Promise<void> {
+  const partnerId = activeChatSessions.get(userId);
+  if (!partnerId || !activeSessions.has(partnerId)) return;
+  
+  // Get or create buffer for this user
+  const buffer = this.conversationBuffers.get(userId) || {
+    userId, 
+    partnerId, 
+    buffer: '', 
+    lastUpdate: Date.now()
+  };
+  
+  // Replace buffer content (don't append - speech recognition sends refined versions)
+  buffer.buffer = text;
+  buffer.lastUpdate = Date.now();
+  
+  // Check for natural completion (ends with punctuation)
+  const isComplete = /[.!?]\s*$/.test(text.trim());
+  
+  if (isComplete) {
+    // Natural completion - save immediately
+    const chatId = [userId, partnerId].sort().join('_');
+    await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
+    buffer.buffer = ''; // Clear buffer
     
-    // Get or create buffer for this user
-    const buffer = this.conversationBuffers.get(userId) || {
-      userId, 
-      partnerId, 
-      buffer: '', 
-      lastUpdate: Date.now()
-    };
-    
-    // Add text to buffer
-    buffer.buffer += text + ' ';
-    buffer.lastUpdate = Date.now();
-    
-    // Check for natural completion (ends with punctuation)
-    const isComplete = /[.!?]\s*$/.test(text.trim());
-    
-    if (isComplete) {
-      // Natural completion - save immediately
-      const chatId = [userId, partnerId].sort().join('_');
-      await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
-      buffer.buffer = ''; // Clear buffer
-    } else {
-      // No natural completion - set timeout for artificial completion
-      const existingTimer = this.messageTimers.get(userId);
-      if (existingTimer) clearTimeout(existingTimer);
-      
-      const timer = setTimeout(async () => {
-        if (buffer.buffer.trim()) {
-          const chatId = [userId, partnerId].sort().join('_');
-          await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
-          buffer.buffer = ''; // Clear buffer
-          this.conversationBuffers.set(userId, buffer);
-        }
-      }, 3000); // 3 seconds timeout
-      
-      this.messageTimers.set(userId, timer);
+    // Clear any existing timer since we completed naturally
+    const existingTimer = this.messageTimers.get(userId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      this.messageTimers.delete(userId);
     }
+  } else {
+    // No natural completion - set timeout for artificial completion
+    const existingTimer = this.messageTimers.get(userId);
+    if (existingTimer) clearTimeout(existingTimer);
     
-    // Update buffer
-    this.conversationBuffers.set(userId, buffer);
+    const timer = setTimeout(async () => {
+      if (buffer.buffer.trim()) {
+        const chatId = [userId, partnerId].sort().join('_');
+        await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
+        buffer.buffer = ''; // Clear buffer
+        this.conversationBuffers.set(userId, buffer);
+      }
+    }, 3000); // 3 seconds timeout
     
-    // Show message to partner immediately (real-time display)
-    const partnerSession = activeSessions.get(partnerId)!;
-    const senderNickname = getNicknameForUser(partnerId, userId);
-    partnerSession.layouts.showTextWall(`${senderNickname}: ${text}`);
+    this.messageTimers.set(userId, timer);
   }
-
+  
+  // Update buffer
+  this.conversationBuffers.set(userId, buffer);
+  
+  // Show message to partner immediately (real-time display)
+  const partnerSession = activeSessions.get(partnerId)!;
+  const senderNickname = getNicknameForUser(partnerId, userId);
+  partnerSession.layouts.showTextWall(`${senderNickname}: ${text}`);
+}
   private cleanupUserBuffers(userId: string): void {
     // Clear any pending timer
     const timer = this.messageTimers.get(userId);

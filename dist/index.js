@@ -185,8 +185,8 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
             buffer: '',
             lastUpdate: Date.now()
         };
-        // Add text to buffer
-        buffer.buffer += text + ' ';
+        // Replace buffer content (don't append - speech recognition sends refined versions)
+        buffer.buffer = text;
         buffer.lastUpdate = Date.now();
         // Check for natural completion (ends with punctuation)
         const isComplete = /[.!?]\s*$/.test(text.trim());
@@ -195,6 +195,12 @@ class MyAugmentOSApp extends sdk_1.TpaServer {
             const chatId = [userId, partnerId].sort().join('_');
             await this.saveCompletedMessage(chatId, userId, buffer.buffer.trim());
             buffer.buffer = ''; // Clear buffer
+            // Clear any existing timer since we completed naturally
+            const existingTimer = this.messageTimers.get(userId);
+            if (existingTimer) {
+                clearTimeout(existingTimer);
+                this.messageTimers.delete(userId);
+            }
         }
         else {
             // No natural completion - set timeout for artificial completion
