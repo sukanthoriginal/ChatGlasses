@@ -1,11 +1,36 @@
-# file: Dockerfile.webview
-FROM python:3.13-slim
+# Use Python 3.11 slim image as base
+FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-COPY . .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the entire project
+COPY . .
+
+# Set the working directory to the contacts_management folder
+WORKDIR /app/contacts_management
+
+# Create templates and static directories if they don't exist
+RUN mkdir -p templates static
+
+# Expose port 96 (as specified in your app)
 EXPOSE 96
 
-CMD ["gunicorn", "qr_mobile:application", "--bind", "0.0.0.0:96"]
+# Set environment variables
+ENV FLASK_APP=contacts_frontend.py
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+
+# Run the application
+CMD ["python", "contacts_frontend.py"]

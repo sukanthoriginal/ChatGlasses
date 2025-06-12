@@ -72,19 +72,13 @@ def generate_typescript_map(nested_map):
     return "\n".join(lines)
 
 if __name__ == "__main__":
-    supabase = init_supabase()
     try:
-        # Get all contacts (including blocked ones for now)
-        response = supabase.table("contacts") \
-            .select("*") \
-            .execute()
-        
-        # Get all blocked relationships in both directions
+        supabase = init_supabase()
+        response = supabase.table("contacts").select("*").execute()
         blocked_pairs = get_all_blocked_pairs(supabase)
-        
-        # Build the nested map, excluding blocked relationships
         nested = build_nested_map(response.data, blocked_pairs)
         ts_output = generate_typescript_map(nested)
         print(ts_output)
     except Exception as e:
-        print(f"❌ Error: {e}")
+        # Avoid Unicode issue
+        print("Error:", e)

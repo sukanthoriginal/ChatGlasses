@@ -7,32 +7,22 @@ services:
     ports:
       - "81:81"
     volumes:
-      - ./src:/app/src
+      - ./src:/app
 
   webview:
     build:
       context: .
       dockerfile: Dockerfile.webview
     ports:
-      - "96:96"  # maps host port 96 to container port 96
-    volumes:
-      - .:/app
+      - "96:96"
     env_file:
       - mentra.env
-    restart: unless-stopped
-
-
-  externalweb:
-    build:
-      context: .
-      dockerfile: Dockerfile.externalweb  # ✅ Fixed: nested under `build`
-    ports:
-      - "98:98"
     volumes:
-      - .:/app
-    env_file:
-      - mentra.env
-    restart: unless-stopped
+      - ./contacts_management/templates:/app/contacts_management/templates
+      - ./contacts_management/static:/app/contacts_management/static
+    depends_on:
+      - glasses
+    restart: unless-stopped    
 
   cloudflared:
     image: cloudflare/cloudflared:latest
