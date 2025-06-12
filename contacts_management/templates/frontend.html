@@ -12,10 +12,6 @@
         .success { color: green; }
         .error { color: red; }
         .form-group { margin: 10px 0; }
-        .conversation { margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px; max-height: 200px; overflow-y: auto; }
-        .message { margin: 5px 0; padding: 5px; background: white; border-radius: 3px; }
-        .hidden { display: none; }
-        .timestamp { color: #666; font-size: 0.85em; font-style: italic; }
     </style>
 </head>
 <body>
@@ -27,6 +23,8 @@
 • Say 'End chat' to end current chat  
 • Say 'Friends' to see your full friend list  
 • Say 'Menu' to show menu
+
+Note: You can only connect with someone if both of you have stored each other in their contacts.
 </div>
     
     <div id="message"></div>
@@ -47,38 +45,6 @@
 
     <script>
         let contacts = [];
-
-        // Format date to user-friendly format (same as reminders code)
-        function formatDateToUserFriendly(dateStr) {
-            if (!dateStr) return '';
-            
-            const date = new Date(dateStr);
-            const now = new Date();
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            // Check if valid date
-            if (isNaN(date.getTime())) return dateStr;
-            
-            // Format time
-            const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
-            const timeStr = date.toLocaleTimeString(undefined, timeOptions);
-            
-            // Check if today
-            if (date.toDateString() === now.toDateString()) {
-                return `Today at ${timeStr}`;
-            }
-            
-            // Check if yesterday
-            if (date.toDateString() === yesterday.toDateString()) {
-                return `Yesterday at ${timeStr}`;
-            }
-            
-            // Otherwise show full date
-            const dateOptions = { month: 'short', day: 'numeric' };
-            const fullDateStr = date.toLocaleDateString(undefined, dateOptions);
-            return `${fullDateStr} at ${timeStr}`;
-        }
 
         // Fetch and display contacts
         async function loadContacts() {
@@ -104,8 +70,6 @@
                 const div = document.createElement('div');
                 div.className = 'contact' + (contact.is_blocked ? ' blocked' : '');
                 
-                const conversationId = `conv_${contact.contact_email.replace('@', '_').replace('.', '_')}`;
-                
                 div.innerHTML = `
                     <strong>${contact.nickname}</strong> - ${contact.contact_email}
                     ${contact.is_blocked ? '<span style="color: red;">[BLOCKED]</span>' : ''}
@@ -117,77 +81,19 @@
                         ${contact.is_blocked ? 'Unblock' : 'Block'}
                     </button>
                     <button onclick="removeContact('${contact.contact_email}')" style="color: red;">Remove</button>
-                    <button onclick="toggleConversation('${contact.contact_email}')">Show Chat</button>
-                    <div id="${conversationId}" class="conversation hidden"></div>
+                    <button onclick="openChatHistory('${contact.contact_email}', '${contact.nickname}')">Show Chat</button>
                 `;
                 
                 container.appendChild(div);
             });
         }
 
-        // Toggle conversation history display
-        async function toggleConversation(contactEmail) {
-            const conversationId = `conv_${contactEmail.replace('@', '_').replace('.', '_')}`;
-            const conversationDiv = document.getElementById(conversationId);
-            
-            if (conversationDiv.classList.contains('hidden')) {
-                // Show conversation - load it first
-                await loadConversation(contactEmail);
-                conversationDiv.classList.remove('hidden');
-            } else {
-                // Hide conversation
-                conversationDiv.classList.add('hidden');
-            }
-        }
-
-        // Load conversation history
-        async function loadConversation(contactEmail) {
-            const conversationId = `conv_${contactEmail.replace('@', '_').replace('.', '_')}`;
-            const conversationDiv = document.getElementById(conversationId);
-            
-            try {
-                const response = await fetch(`/api/get_conversation/${contactEmail}`);
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        displayConversation(result.messages, conversationDiv, contactEmail);
-                    } else {
-                        conversationDiv.innerHTML = '<div class="message">Failed to load conversation</div>';
-                    }
-                } else {
-                    conversationDiv.innerHTML = '<div class="message">Error loading conversation</div>';
-                }
-            } catch (error) {
-                conversationDiv.innerHTML = `<div class="message">Error: ${error.message}</div>`;
-            }
-        }
-
-        // Display conversation messages
-        function displayConversation(messages, container, contactEmail) {
-            if (!messages || messages.length === 0) {
-                container.innerHTML = '<div class="message">No conversation history</div>';
-                return;
-            }
-            
-            // Find the contact's nickname
-            const contact = contacts.find(c => c.contact_email === contactEmail);
-            const contactNickname = contact ? contact.nickname : contactEmail;
-            
-            container.innerHTML = messages.map(msg => {
-                // Determine if this message is from the user or the contact
-                let senderName;
-                if (msg.user_id === contactEmail) {
-                    senderName = contactNickname;
-                } else {
-                    senderName = "You";
-                }
-                
-                return `<div class="message">
-                    <strong>${senderName}:</strong> ${msg.message}
-                    <br><div class="timestamp">${formatDateToUserFriendly(msg.timestamp)}</div>
-                </div>`;
-            }).join('');
-        }
+        // Open chat history in new page
+        // Open chat history in same page (replace the current function in frontend.html)
+function openChatHistory(contactEmail, contactNickname) {
+    const url = `/chat_history?contact=${encodeURIComponent(contactEmail)}&nickname=${encodeURIComponent(contactNickname)}`;
+    window.location.href = url;  // Changed from window.open() to window.location.href
+}   
 
         // Add new contact
         async function addContact() {
