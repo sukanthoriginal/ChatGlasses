@@ -4,322 +4,549 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .header h1 {
-            margin: 0;
-            font-size: 1.5em;
-        }
-        
-        .controls {
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 14px;
-        }
+    :root {
+        --container-background-color: rgb(0, 0, 0);
+        --container-border-radius: 25px;
+        --container-padding: 20px;
+        --text-color: #004d40;
+        --heading-color: #72ffda;
+        --heading-border-color: #20c997;
+        --contact-background: #72ffda;
+        --contact-border-color: #20c997;
+        --contact-blocked-border-color: #ff5252;
+        --contact-blocked-background: rgba(255, 82, 82, 0.1);
+        --timestamp-color: #006d52;
+        --user-id-color: #20c997;
+        --button-background-color: rgba(32, 201, 151, 0.7);
+        --button-text-color: #004d40;
+        --button-border-color: #20c997;
+        --button-shadow-color: rgba(32, 201, 151, 0.3);
+        --button-hover-color: rgba(0, 109, 76, 0.9);
+        --input-background: rgba(0, 77, 64, 0.8);
+        --input-text-color: #20c997;
+        --input-border-color: #20c997;
+        --input-box-shadow: 0 0 15px rgba(32, 201, 151, 0.3);
+        --success-background: rgba(0, 184, 148, 0.15);
+        --success-color: #00b894;
+        --success-border: #00897b;
+        --error-background: rgba(255, 82, 82, 0.2);
+        --error-color: #ff5252;
+        --error-border: #ff1744;
+        --pulse-color-light: rgba(32, 201, 151, 0.5);
+        --pulse-color-dark: rgba(32, 201, 151, 0.8);
+        --container-background-blur: 10px;
+        --container-background-opacity: 0.025;
+        --contact-background-blur: 8px;
+        --contact-background-opacity: 0.75;
+        --message-user-background: rgba(114, 255, 218, 0.8);
+        --message-contact-background: rgba(0, 77, 64, 0.6);
+    }
 
-        
-        
-        .conversation { 
-            padding: 20px; 
-            max-height: 600px; 
-            overflow-y: auto;
-            scroll-behavior: smooth;
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Montserrat', sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background-color: transparent;
+        color: var(--text-color);
+        text-align: center;
+        box-sizing: border-box;
+        background-image: 
+            linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+            url('https://raw.githubusercontent.com/Sukanth-Original/What-did-you-get-done/refs/heads/master/gif_background.gif');    
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: rgba(0, 0, 0, var(--container-background-opacity));
+        border-radius: var(--container-border-radius);
+        backdrop-filter: blur(var(--container-background-blur));
+        -webkit-backdrop-filter: blur(var(--container-background-blur));
+        box-shadow: 0 0 20px rgba(224, 247, 250, 0.1);
+        overflow: hidden;
+        text-align: left;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--container-padding);
+        background: rgba(114, 255, 218, 0.1);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(32, 201, 151, 0.3);
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 1.8em;
+        color: var(--heading-color);
+        text-shadow: 0 0 10px var(--heading-border-color),
+                     0 0 20px rgba(100, 255, 237, 0.3),
+                     0 0 30px rgba(100, 255, 237, 0.2);
+        font-style: italic;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .nav-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Improved Button Styling */
+    .control-btn {
+        background: rgba(0, 77, 64, 0.9);
+        color: #72ffda;
+        border: 1px solid rgba(32, 201, 151, 0.6);
+        padding: 10px 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+        font-size: 13px;
+        letter-spacing: 0.3px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .control-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(114, 255, 218, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .control-btn:hover::before {
+        left: 100%;
+    }
+
+    .control-btn:hover {
+        background: rgba(32, 201, 151, 0.15);
+        color: #72ffda;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(32, 201, 151, 0.25);
+        border-color: rgba(114, 255, 218, 0.8);
+    }
+
+    .control-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+    }
+
+    .search-container {
+        width: 100%;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 12px 20px;
+        border: 2px solid rgba(32, 201, 151, 0.6);
+        border-radius: 15px;
+        background: rgba(0, 77, 64, 0.3);
+        color: #72ffda;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        outline: none;
+        box-shadow: 0 2px 15px rgba(32, 201, 151, 0.1);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .search-box::placeholder {
+        color: rgba(114, 255, 218, 0.6);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+    }
+
+    .search-box:focus {
+        border-color: #72ffda;
+        box-shadow: 0 0 25px rgba(32, 201, 151, 0.3);
+        background: rgba(0, 77, 64, 0.4);
+    }
+
+    .conversation {
+        padding: var(--container-padding);
+        max-height: 600px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .conversation::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .conversation::-webkit-scrollbar-track {
+        background: rgba(0, 77, 64, 0.2);
+        border-radius: 10px;
+    }
+
+    .conversation::-webkit-scrollbar-thumb {
+        background: rgba(32, 201, 151, 0.5);
+        border-radius: 10px;
+        border: 2px solid rgba(0, 77, 64, 0.2);
+    }
+
+    .conversation::-webkit-scrollbar-thumb:hover {
+        background: rgba(32, 201, 151, 0.8);
+    }
+
+    .message {
+        margin: 15px 0;
+        padding: 15px 20px;
+        border-radius: 20px;
+        position: relative;
+        max-width: 70%;
+        word-wrap: break-word;
+        animation: fadeIn 0.3s ease-in;
+        backdrop-filter: blur(var(--contact-background-blur));
+        -webkit-backdrop-filter: blur(var(--contact-background-blur));
+        box-shadow: 0 0 15px rgba(32, 201, 151, 0.2);
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.9); 
         }
-        
-        .conversation::-webkit-scrollbar {
-            width: 6px;
+        to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
         }
-        
-        .conversation::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        .conversation::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        
-        .message { 
-            margin: 10px 0; 
-            padding: 12px 16px; 
-            background: white; 
-            border-radius: 12px; 
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            max-width: 70%;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .message.user { 
-            background: #007bff;
-            color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .message.contact { 
-            background: #e9ecef;
-            color: #333;
-            margin-right: auto;
-            border-bottom-left-radius: 4px;
-        }
-        
-        .message.hidden {
-            display: none;
-        }
-        
-        .message-content {
-            margin-bottom: 5px;
-            line-height: 1.4;
-        }
-        
-        .timestamp { 
-            color: rgba(255,255,255,0.7);
-            font-size: 0.75em; 
-            text-align: right;
-        }
-        
-        .message.contact .timestamp {
-            color: #666;
-        }
-        /* Add this CSS rule to hide delete buttons for contact messages */
-.message.contact .message-actions {
-    display: none !important; 
+    }
+
+    .message:hover {
+        box-shadow: 0 0 25px rgba(32, 201, 151, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .message.user {
+        background: var(--message-user-background);
+        color: var(--button-text-color);
+        margin-left: auto;
+        border-bottom-right-radius: 5px;
+        border-left: 3px solid var(--contact-border-color);
+    }
+
+    .message.contact {
+        background: var(--message-contact-background);
+        color: #20c997;
+        margin-right: auto;
+        border-bottom-left-radius: 5px;
+        border-right: 3px solid var(--contact-border-color);
+    }
+
+    .message.hidden {
+        display: none;
+    }
+
+    .message-content {
+        margin-bottom: 8px;
+        line-height: 1.5;
+        font-weight: 400;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .timestamp {
+        font-size: 0.75em;
+        text-align: right;
+        opacity: 0.8;
+        font-style: italic;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+    }
+
+    .message.user .timestamp {
+        color: var(--timestamp-color);
+    }
+
+    .message.contact .timestamp {
+        color: #72ffda;
+    }
+
+    .message.contact .message-actions {
+        display: none !important;
+    }
+
+    .sender-name {
+        font-weight: 600;
+        font-size: 0.9em;
+        margin-bottom: 6px;
+        text-shadow: 0 0 5px rgba(32, 201, 151, 0.3);
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .message.user .sender-name {
+        color: var(--timestamp-color);
+    }
+
+    .message.contact .sender-name {
+        color: var(--heading-color);
+    }
+
+    .success {
+        color: var(--success-color);
+        background: var(--success-background);
+        border: 1px solid var(--success-border);
+        box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 15px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .error {
+        color: var(--error-color);
+        background: var(--error-background);
+        border: 1px solid var(--error-border);
+        box-shadow: 0 0 15px rgba(255, 82, 82, 0.2);
+        padding: 15px;
+        border-radius: 15px;
+        margin: 15px 0;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .message-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .message:hover .message-actions {
+        opacity: 1;
+    }
+
+    .delete-btn {
+        background: rgba(255, 82, 82, 0.8);
+        color: white;
+        border: 2px solid #ff1744;
+        padding: 6px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+    }
+
+    .delete-btn:hover {
+        background: #ff1744;
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(255, 23, 68, 0.5);
+    }
+
+    .date-separator {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: var(--heading-color);
+    position: relative;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(32, 201, 151, 0.3);
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap; /* Add this line */
 }
 
-        
-        .sender-name {
-            font-weight: 600;
-            font-size: 0.85em;
-            margin-bottom: 4px;
+    .date-separator::before,
+    .date-separator::after {
+        content: '';
+        display: inline-block;
+        width: 30%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--contact-border-color), transparent);
+        vertical-align: middle;
+        margin: 0 15px;
+        border-radius: 2px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--heading-color);
+        background: rgba(114, 255, 218, 0.1);
+        border-radius: 20px;
+        border-left: 3px solid var(--contact-border-color);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.7;
+        text-shadow: 0 0 10px var(--heading-border-color);
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: var(--heading-color);
+        background: rgba(114, 255, 218, 0.1);
+        border-radius: 20px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+    }
+
+    .stats {
+        display: none !important;
+    }
+
+    #message {
+        padding: 0 var(--container-padding);
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 10px var(--pulse-color-light);
         }
-        
-        .message.user .sender-name {
-            color: rgba(255,255,255,0.9);
+        50% {
+            box-shadow: 0 0 25px var(--pulse-color-dark);
         }
-        
-        .message.contact .sender-name {
-            color: #495057;
+        100% {
+            box-shadow: 0 0 10px var(--pulse-color-light);
         }
-        
-        .success { 
-            color: #28a745; 
-            background: #d4edda; 
-            padding: 10px; 
-            border-radius: 6px; 
-            margin: 10px 0;
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
         }
-        
-        .error { 
-            color: #dc3545; 
-            background: #f8d7da; 
-            padding: 10px; 
-            border-radius: 6px; 
-            margin: 10px 0;
+
+        .container {
+            border-radius: 15px;
         }
-        
+
+        .header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+            padding: 15px;
+            align-items: stretch;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            text-align: center;
+            flex: none;
+            min-width: unset;
+        }
+
+        .nav-controls {
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .control-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: 36px;
+            flex: 1;
+            max-width: 80px;
+        }
+
+        .search-container {
+            margin-top: 10px;
+        }
+
+        .search-box {
+            font-size: 13px;
+            padding: 10px 16px;
+        }
+
+        .conversation {
+            padding: 15px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+        }
+
         .message-actions {
-            position: absolute;
             top: 5px;
             right: 5px;
-            opacity: 0;
-            transition: opacity 0.2s;
         }
-        
-        .message:hover .message-actions {
-            opacity: 1;
-        }
-        
+
         .delete-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
             width: 24px;
             height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 10px;
         }
-        
-        .delete-btn:hover {
-            background: #c82333;
-            transform: scale(1.1);
-        }
+    }
+</style>
 
-        .date-separator {
-  text-align: center;
-  margin: 12px 0;
-  font-size: 0.85em;
-  color: #666;
-  position: relative;
-}
-.date-separator::before,
-.date-separator::after {
-  content: '';
-  display: inline-block;
-  width: 30%;
-  height: 1px;
-  background: #ddd;
-  vertical-align: middle;
-  margin: 0 8px;
-}
-
-        
-        .btn {
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #0056b3;
-            transform: translateY(-1px);
-        }
-        
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-        
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #1e7e34;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-        
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-        
- .stats {
-    display: none !important;
-}
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .controls {
-                flex-direction: column;
-            }
-            
-            .search-box {
-                width: 100%;
-            }
-            
-            .message {
-                max-width: 85%;
-            }
-            
-            .stats {
-                flex-direction: column;
-                gap: 5px;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1 id="chatTitle">Chat History</h1>
-<div style="display: flex; flex-wrap: nowrap; gap: 10px; align-items: center; overflow-x: auto;">
-    <a href="/contacts" class="btn btn-primary">← Back</a>
-    <button class="btn btn-success" onclick="refreshConversation()">🔄 Refresh</button>
-    <button class="btn btn-primary" onclick="scrollToBottom()">⬇️ Latest</button>
-    <button class="btn btn-warning" onclick="toggleSearchBar()">🔍 Search</button>
-</div>
-<div id="searchContainer" style="display: none; margin-top: 10px;">
-    <input type="text" id="searchBox" class="search-box" placeholder="Search messages..." onkeyup="searchMessages()">
-</div>
-
+            <div class="nav-controls">
+                <a href="/contacts" class="control-btn">Back</a>
+                <button class="control-btn" onclick="refreshConversation()">Refresh</button>
+                <button class="control-btn" onclick="scrollToBottom()">Latest</button>
+                <button class="control-btn" onclick="toggleSearchBar()">Search</button>
+            </div>
+            <div id="searchContainer" class="search-container">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search messages..." onkeyup="searchMessages()">
+            </div>
 
             <div class="stats">
                 <span id="messageCount">Messages: 0</span>
@@ -327,9 +554,11 @@
             </div>
         </div>
         
+        <div id="message"></div>
+        
         <div id="conversation" class="conversation">
             <div class="loading">
-                <div>📱 Loading conversation...</div>
+                <div>Loading conversation...</div>
             </div>
         </div>
     </div>
@@ -346,18 +575,18 @@
             contactEmail = params.get('contact') || '';
             contactNickname = params.get('nickname') || contactEmail;
             
-            document.getElementById('chatTitle').textContent = `💬 Chat with ${contactNickname}`;
+            document.getElementById('chatTitle').textContent = `Chat with ${contactNickname}`;
         }
 
         // Format date to user-friendly format
         function formatDateToUserFriendly(dateStr) {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
 
-    const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
-    return date.toLocaleTimeString(undefined, timeOptions);
-}
+            const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true };
+            return date.toLocaleTimeString(undefined, timeOptions);
+        }
 
         // Search messages
         function searchMessages() {
@@ -377,7 +606,7 @@
 
         // Refresh conversation
         async function refreshConversation() {
-            showMessage('🔄 Refreshing...', 'success');
+            showMessage('Refreshing...', 'success');
             await loadConversation();
         }
 
@@ -406,25 +635,25 @@
                 document.getElementById('dateRange').textContent = 'Date range: -';
             }
         }
+
         function toggleSearchBar() {
-    const container = document.getElementById('searchContainer');
-    const input = document.getElementById('searchBox');
+            const container = document.getElementById('searchContainer');
+            const input = document.getElementById('searchBox');
 
-    if (container.style.display === 'none') {
-        container.style.display = 'block';
-        setTimeout(() => input.focus(), 100);
-    } else {
-        container.style.display = 'none';
-        input.value = '';
-        searchMessages(); // Reset search
-    }
-}
-
+            if (container.style.display === 'none' || !container.style.display) {
+                container.style.display = 'block';
+                setTimeout(() => input.focus(), 100);
+            } else {
+                container.style.display = 'none';
+                input.value = '';
+                searchMessages(); // Reset search
+            }
+        }
 
         // Load conversation history
         async function loadConversation() {
             if (!contactEmail) {
-                showMessage('❌ No contact specified', 'error');
+                showMessage('No contact specified', 'error');
                 return;
             }
             
@@ -456,88 +685,86 @@
 
         // Display conversation messages
         function displayConversation(messages) {
-  const container = document.getElementById('conversation');
-  if (!messages || messages.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">💬</div>
-        <div>No conversation history</div>
-        <div style="font-size: 0.9em; margin-top: 8px; opacity: 0.7;">
-          Start a conversation to see messages here
-        </div>
-      </div>`;
-    return;
-  }
+            const container = document.getElementById('conversation');
+            if (!messages || messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💬</div>
+                        <div>No conversation history</div>
+                        <div style="font-size: 0.9em; margin-top: 8px; opacity: 0.7;">
+                            Start a conversation to see messages here
+                        </div>
+                    </div>`;
+                return;
+            }
 
-  // sort by timestamp ascending
-  messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            // sort by timestamp ascending
+            messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  let lastDay = null;
-  const html = messages.map(msg => {
-    const date = new Date(msg.timestamp);
-    // determine label
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
+            let lastDay = null;
+            const html = messages.map(msg => {
+                const date = new Date(msg.timestamp);
+                // determine label
+                const now = new Date();
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
 
-    let dayLabel;
-    if (date.toDateString() === now.toDateString()) {
-      dayLabel = 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      dayLabel = 'Yesterday';
-    } else {
-      // e.g. "10 Jun 2025"
-      dayLabel = date.toLocaleDateString(undefined, {
-        day: 'numeric', month: 'short', year: 'numeric'
-      });
-    }
+                let dayLabel;
+                if (date.toDateString() === now.toDateString()) {
+                    dayLabel = 'Today';
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    dayLabel = 'Yesterday';
+                } else {
+                    // e.g. "10 Jun 2025"
+                    dayLabel = date.toLocaleDateString(undefined, {
+                        day: 'numeric', month: 'short', year: 'numeric'
+                    });
+                }
 
-    // insert separator if day changed
-    let separatorHTML = '';
-    if (dayLabel !== lastDay) {
-      separatorHTML = `<div class="date-separator">${dayLabel}</div>`;
-      lastDay = dayLabel;
-    }
+                // insert separator if day changed
+                let separatorHTML = '';
+                if (dayLabel !== lastDay) {
+                    separatorHTML = `<div class="date-separator">${dayLabel}</div>`;
+                    lastDay = dayLabel;
+                }
 
-    const isUser = msg.user_id !== contactEmail;
-    const senderName = isUser ? "You" : contactNickname;
-    const cls = isUser ? "user" : "contact";
+                const isUser = msg.user_id !== contactEmail;
+                const senderName = isUser ? "You" : contactNickname;
+                const cls = isUser ? "user" : "contact";
 
-    // just time
-    const timeStr = date.toLocaleTimeString(undefined,
-      { hour: 'numeric', minute: '2-digit', hour12: true });
+                // just time
+                const timeStr = date.toLocaleTimeString(undefined,
+                    { hour: 'numeric', minute: '2-digit', hour12: true });
 
-    const msgHTML = `
-      <div class="message ${cls}" data-message-id="${msg.id}">
-        <div class="message-actions">
-          <button class="delete-btn"
-            onclick="deleteMessage('${msg.id}')">×</button>
-        </div>
-        <div class="sender-name">${senderName}</div>
-        <div class="message-content">${escapeHtml(msg.message)}</div>
-        <div class="timestamp">${timeStr}</div>
-      </div>`;
+                const msgHTML = `
+                    <div class="message ${cls}" data-message-id="${msg.id}">
+                        <div class="message-actions">
+                            <button class="delete-btn"
+                                onclick="deleteMessage('${msg.id}')">×</button>
+                        </div>
+                        <div class="sender-name">${senderName}</div>
+                        <div class="message-content">${escapeHtml(msg.message)}</div>
+                        <div class="timestamp">${timeStr}</div>
+                    </div>`;
 
-    return separatorHTML + msgHTML;
-  }).join('');
+                return separatorHTML + msgHTML;
+            }).join('');
 
-  container.innerHTML = html;
-}
-
+            container.innerHTML = html;
+        }
 
         function formatDateHeader(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(now.getDate() - 1);
+            const date = new Date(dateStr);
+            const now = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
 
-    if (date.toDateString() === now.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+            if (date.toDateString() === now.toDateString()) return 'Today';
+            if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
 
-    const options = { day: 'numeric', month: 'short', year: 'numeric' };
-    return date.toLocaleDateString(undefined, options);
-}
-
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return date.toLocaleDateString(undefined, options);
+        }
 
         // Escape HTML to prevent XSS
         function escapeHtml(text) {
@@ -547,54 +774,51 @@
         }
 
         // Delete individual message
-        // Delete individual message
-async function deleteMessage(messageId) {
-    // 1. Confirm deletion
-    if (!confirm('🗑️ Delete this message?\n\nNote: This will permanently delete the message for everyone.')) {
-        return;
-    }
-    
-    try {
-        // 2. Call backend
-        const response = await fetch(`/api/delete_message/${messageId}`, {
-            method: 'POST'
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            // 3a. Optimistically remove from DOM
-            const el = document.querySelector(`.message[data-message-id="${messageId}"]`);
-            if (el) el.remove();
+        async function deleteMessage(messageId) {
+            // 1. Confirm deletion
+            if (!confirm('Delete this message?\n\nNote: This will permanently delete the message for everyone.')) {
+                return;
+            }
             
-            // 3b. Update your in-memory arrays
-            allMessages = allMessages.filter(msg => msg.id !== messageId);
-            filteredMessages = filteredMessages.filter(msg => msg.id !== messageId);
-            
-            // 3c. Recompute stats display
-            updateStats();
-            
-            // 3d. Show success toast
-            showMessage('✅ Message deleted successfully!', 'success');
-        } else {
-            // Backend reported failure
-            showMessage(`❌ ${result.message || 'Failed to delete message'}`, 'error');
+            try {
+                // 2. Call backend
+                const response = await fetch(`/api/delete_message/${messageId}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 3a. Optimistically remove from DOM
+                    const el = document.querySelector(`.message[data-message-id="${messageId}"]`);
+                    if (el) el.remove();
+                    
+                    // 3b. Update your in-memory arrays
+                    allMessages = allMessages.filter(msg => msg.id !== messageId);
+                    filteredMessages = filteredMessages.filter(msg => msg.id !== messageId);
+                    
+                    // 3c. Recompute stats display
+                    updateStats();
+                    
+                    // 3d. Show success toast
+                    showMessage('Message deleted successfully!', 'success');
+                } else {
+                    // Backend reported failure
+                    showMessage(`${result.message || 'Failed to delete message'}`, 'error');
+                }
+            } catch (error) {
+                // Network or parsing error
+                showMessage('Error deleting message: ' + error.message, 'error');
+            }
         }
-    } catch (error) {
-        // Network or parsing error
-        showMessage('❌ Error deleting message: ' + error.message, 'error');
-    }
-}
-
-
 
         // Clear all history for current user
         async function clearAllHistory() {
-            if (!confirm(`🗑️ Clear all chat history with ${contactNickname}?\n\nNote: This action cannot be undone.`)) {
+            if (!confirm(`Clear all chat history with ${contactNickname}?\n\nNote: This action cannot be undone.`)) {
                 return;
             }
             
             // Since the API endpoint doesn't exist in backend, show a message
-            showMessage('⚠️ Clear all history feature is not yet implemented in the backend. You can delete individual messages for now.', 'error');
+            showMessage('Clear all history feature is not yet implemented in the backend. You can delete individual messages for now.', 'error');
         }
 
         // Show message to user
@@ -620,7 +844,7 @@ async function deleteMessage(messageId) {
                 }
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
-                    document.getElementById('searchBox').focus();
+                    toggleSearchBar();
                 }
             });
         };
