@@ -4,19 +4,545 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contacts Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .contact { padding: 10px; border: 1px solid #ddd; margin: 5px 0; }
-        .blocked { background-color: #ffebee; }
-        input, button { margin: 5px; padding: 5px; }
-        .success { color: green; }
-        .error { color: red; }
-        .form-group { margin: 10px 0; }
+        :root {
+            --container-background-color: rgb(0, 0, 0);
+            --container-border-radius: 25px;
+            --container-padding: 20px;
+            --text-color: #004d40;
+            --heading-color: #72ffda;
+            --heading-border-color: #20c997;
+            --contact-background: #72ffda;
+            --contact-border-color: #20c997;
+            --contact-blocked-border-color: #ff5252;
+            --contact-blocked-background: rgba(255, 82, 82, 0.1);
+            --timestamp-color: #006d52;
+            --user-id-color: #20c997;
+            --button-background-color: rgba(32, 201, 151, 0.7);
+            --button-text-color: #004d40;
+            --button-border-color: #20c997;
+            --button-shadow-color: rgba(32, 201, 151, 0.3);
+            --button-hover-color: rgba(0, 109, 76, 0.9);
+            --input-background: rgba(0, 77, 64, 0.8);
+            --input-text-color: #e0f7fa;
+            --input-border-color: #20c997;
+            --input-box-shadow: 0 0 15px rgba(32, 201, 151, 0.3);
+            --success-background: rgba(0, 184, 148, 0.15);
+            --success-color: #00b894;
+            --success-border: #00897b;
+            --error-background: rgba(255, 82, 82, 0.2);
+            --error-color: #ff5252;
+            --error-border: #ff1744;
+            --pulse-color-light: rgba(32, 201, 151, 0.5);
+            --pulse-color-dark: rgba(32, 201, 151, 0.8);
+            --container-background-blur: 10px;
+            --container-background-opacity: 0.025;
+            --contact-background-blur: 8px;
+            --contact-background-opacity: 0.75;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 60px;
+            background-color: transparent;
+            color: var(--text-color);
+            text-align: center;
+            box-sizing: border-box;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+                url('https://raw.githubusercontent.com/Sukanth-Original/What-did-you-get-done/refs/heads/master/gif_background.gif');    
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto 20px;
+            background-color: rgba(0, 0, 0, var(--container-background-opacity));
+            padding: var(--container-padding);
+            border-radius: var(--container-border-radius);
+            backdrop-filter: blur(var(--container-background-blur));
+            -webkit-backdrop-filter: blur(var(--container-background-blur));
+            box-shadow: 0 0 20px rgba(224, 247, 250, 0.1);
+            text-align: left;
+        }
+
+        h1 {
+            color: var(--heading-color);
+            border-bottom: none;
+            padding-bottom: 10px;
+            margin-top: 0;
+            text-shadow: 0 0 3px var(--heading-border-color), 0 0 6px var(--heading-border-color);
+            font-style: italic;
+            text-align: center;
+        }
+
+        h3 {
+            color: var(--heading-color);
+            margin-top: 30px;
+            text-shadow:
+                0 0 10px var(--heading-border-color),
+                0 0 20px rgba(100, 255, 237, 0.3),
+                0 0 30px rgba(100, 255, 237, 0.2),
+                0 0 40px rgba(100, 255, 237, 0.1); 
+            font-style: italic;
+            text-align: center;
+        }
+
+        /* FIXED: Contacts header with proper alignment */
+        .contacts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0 20px 0;
+        }
+
+        .contacts-header h3 {
+            margin: 0;
+            text-align: left;
+            flex: 1;
+        }
+
+        .add-contact-btn {
+            padding: 10px;
+            background: rgba(114, 255, 218, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 2px solid var(--contact-border-color);
+            border-radius: 50%;
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(32, 201, 151, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .add-contact-btn:hover {
+            background: rgba(114, 255, 218, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(32, 201, 151, 0.4);
+        }
+
+        .chat-instructions {
+    font-size: 14px;
+    font-family: 'Montserrat', sans-serif;
+    white-space: pre-wrap;
+    background: rgba(114, 255, 218, 0.1);
+    padding: 0.5em 1em; /* less padding vertically */
+    border-radius: 15px;
+    border-left: 3px solid var(--contact-border-color);
+    margin: 0; /* removes vertical spacing */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 0 10px rgba(32, 201, 151, 0.2);
+    color: #72ffda;
+}
+
+        .message {
+            margin: 20px 0;
+        }
+
+        .success {
+            background-color: var(--success-background);
+            color: var(--success-color);
+            border: 1px solid var(--success-border);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .error {
+            background-color: var(--error-background);
+            color: var(--error-color);
+            border: 1px solid var(--error-border);
+            box-shadow: 0 0 15px rgba(255, 82, 82, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* FIXED: Add Contact Form */
+        .add-contact-form {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+            background: #004d40;
+            backdrop-filter: blur(var(--contact-background-blur));
+            -webkit-backdrop-filter: blur(var(--contact-background-blur));
+            border-left: 3px solid var(--contact-border-color);
+            border-radius: 15px;
+            margin: 10px 0;
+        }
+
+        .add-contact-form.expanded {
+            max-height: 200px;
+            padding: 20px;
+            box-shadow:
+                0 0 4px var(--heading-border-color),
+                0 0 6px rgba(100, 255, 237, 0.3),
+                0 0 9px rgba(100, 255, 237, 0.2),
+                0 0 12px rgba(100, 255, 237, 0.1);
+        }
+        .add-contact-form input {
+    color: #ffffff; /* Input text color */
+}
+
+.add-contact-form input::placeholder {
+    color: #004d40; /* Placeholder text color */
+}
+
+        /* FIXED: Form row alignment */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            justify-content: flex-start;
+
+        }
+
+        .form-row input {
+    flex: 1;
+    box-sizing: border-box; /* Ensure consistent box model */
+    height: auto;
+    min-height: 44px; /* Set consistent minimum height */
+}
+
+        .form-row button {
+    flex-shrink: 0;
+    box-sizing: border-box; /* Ensure consistent box model */
+    height: auto;
+    min-height: 44px; /* Match input height */
+    white-space: nowrap; /* Prevent button text wrapping */
+}
+
+input[type="email"], input[type="text"] {
+    padding: 12px 15px;
+    border: 2px solid var(--input-border-color);
+    border-radius: 10px;
+    background-color: #20c997; /* Your teal background */
+    color: #004d40; /* Direct font color change */
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+    box-shadow: var(--input-box-shadow);
+    transition: all 0.3s ease;
+    min-width: 0;
+}
+
+
+        input[type="email"], input[type="text"], button {
+    box-sizing: border-box;
+    line-height: 1.2; /* Consistent line height */
+}
+
+        input[type="email"]:focus, input[type="text"]:focus {
+            box-shadow: 0 0 20px rgba(100, 255, 237, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--button-background-color);
+            color: var(--button-text-color);
+            border: 2px solid var(--button-border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px var(--button-shadow-color);
+        }
+
+        button:hover {
+            background-color: var(--button-hover-color);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--button-shadow-color);
+        }
+
+        .contact {
+            background: rgba(114, 255, 218, var(--contact-background-opacity));
+            backdrop-filter: blur(var(--contact-background-blur));
+            -webkit-backdrop-filter: blur(var(--contact-background-blur));
+            border-left: 3px solid var(--contact-border-color);
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow:
+                0 0 4px var(--heading-border-color),
+                0 0 6px rgba(100, 255, 237, 0.3),
+                0 0 9px rgba(100, 255, 237, 0.2),
+                0 0 12px rgba(100, 255, 237, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .contact:hover {
+            box-shadow:
+                0 0 15px rgba(100, 255, 237, 0.4),
+                0 0 25px rgba(100, 255, 237, 0.3),
+                0 0 40px rgba(100, 255, 237, 0.2);
+            transform: translateX(5px);
+        }
+
+        .contact.blocked {
+            border-left-color: var(--contact-blocked-border-color);
+            background: var(--contact-blocked-background);
+            box-shadow:
+                0 0 4px var(--contact-blocked-border-color),
+                0 0 6px rgba(255, 82, 82, 0.3),
+                0 0 9px rgba(255, 82, 82, 0.2);
+        }
+
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+
+        .contact-email {
+            color: var(--timestamp-color);
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .blocked-label {
+            color: var(--error-color);
+            font-weight: bold;
+            font-size: 0.9em;
+            background: rgba(255, 82, 82, 0.2);
+            padding: 4px 8px;
+            border-radius: 5px;
+            border: 1px solid var(--error-border);
+        }
+
+        /* FIXED: Contact actions alignment */
+        .contact-main-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .contact-edit-actions {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+        }
+
+        .contact-edit-actions.expanded {
+            max-height: 150px;
+            padding-top: 15px;
+            margin-top: 15px;
+            border-top: 1px solid rgba(32, 201, 151, 0.3);
+        }
+
+        .contact-edit-actions input {
+            flex: 1;
+            min-width: 150px;
+            margin: 0;
+        }
+
+        .edit-form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+            background: rgba(32, 201, 151, 0.2);
+        }
+
+        /* FIXED: Smaller edit button */
+        .edit-btn {
+            background-color: #004d40;
+            color: #20c997;
+            padding: 6px 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 8px;
+            border: 2px solid var(--button-border-color);
+        }
+
+        .edit-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .edit-btn.active {
+            background-color: #004d40;
+        }
+
+        .edit-btn.active i {
+            transform: rotate(180deg);
+        }
+
+        .update-btn {
+            background-color: #004d40;
+            color: #20c997;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .block-btn {
+            background-color: rgba(255, 193, 7, 0.7);
+            color: #004d40;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .unblock-btn {
+            background-color: rgba(40, 167, 69, 0.7);
+            color: var(--button-text-color);
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .remove-btn {
+            background-color: rgba(220, 53, 69, 0.7);
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .chat-btn {
+            background-color: #004d40;
+            color: #20c997;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .no-contacts {
+            color: var(--timestamp-color);
+            font-style: italic;
+            text-align: center;
+            padding: 30px;
+            background: rgba(114, 255, 218, 0.1);
+            border-radius: 15px;
+            border-left: 3px solid var(--contact-border-color);
+        }
+
+        .footer {
+            text-align: none;
+            margin: 5px 0;
+            padding: 1px 0;
+            font-style: italic;
+            color: #20c997;
+            border-top: none;
+            border-bottom: none;
+            opacity: 0.8;
+            font-size: 0.95em;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px var(--pulse-color-light);
+            }
+            50% {
+                box-shadow: 0 0 25px var(--pulse-color-dark);
+            }
+            100% {
+                box-shadow: 0 0 10px var(--pulse-color-light);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 0 auto 15px;
+            }
+            
+            .contacts-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .contacts-header h3 {
+                text-align: left;
+                margin: 0;
+                flex: 1;
+            }
+            
+            .form-row, .edit-form-row {
+                flex-direction: column;
+            }
+            
+            .form-row input, .edit-form-row input {
+                min-width: 100%;
+            }
+            
+            .contact-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .contact-main-actions {
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+            }
+            
+            .contact-edit-actions {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .action-btn {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Contacts Manager</h1>
-<div style="font-size: 14px; font-family: sans-serif; white-space: pre-wrap; background: #f9f9f9; padding: 1em; border-radius: 8px; width: fit-content; max-width: 400px;">
+    <div class="container">
+        <h1> Contacts Manager</h1>
+        
+        <div class="chat-instructions">
+<strong>Chat Commands:</strong>
 • Say 'Chat [friend name]' to start a chat  
 • Say 'Accept' to accept incoming chat requests  
 • Say 'Reject' to reject incoming chat requests  
@@ -24,76 +550,173 @@
 • Say 'Friends' to see your full friend list  
 • Say 'Menu' to show menu
 
-Note: You can only connect with someone if both of you have stored each other in their contacts.
-</div>
-    
-    <div id="message"></div>
-    
-    <!-- Add Contact Form -->
-    <div class="form-group">
-        <h3>Add New Contact</h3>
-        <input type="email" id="newEmail" placeholder="Contact Email" required>
-        <input type="text" id="newNickname" placeholder="Nickname" required>
-        <button onclick="addContact()">Add Contact</button>
+<em>Note: You can only connect with someone if both of you have stored each other in their contacts.</em>
+        </div>
+        
+        <div id="message"></div>
+        
+        <!-- FIXED: Contacts header with proper alignment -->
+        <div class="contacts-header">
+            <h3><i class="fas fa-users"></i> Your Contacts</h3>
+            <button class="add-contact-btn" onclick="toggleAddContact()">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        
+        <!-- FIXED: Add Contact Form -->
+        <div class="add-contact-form" id="addContactForm">
+            <div class="form-row">
+                <input type="email" id="newEmail" placeholder="Contact Email" required>
+                <input type="text" id="newNickname" placeholder="Nickname" required>
+                <button onclick="addContact()">
+                    <i class="fas fa-user-plus"></i> Add
+                </button>
+            </div>
+        </div>
+        
+        <!-- Contacts List -->
+        <div id="contacts">
+            <div id="contactsList"></div>
+        </div>
     </div>
-    
-    <!-- Contacts List -->
-    <div id="contacts">
-        <h3>Your Contacts</h3>
-        <div id="contactsList"></div>
-    </div>
+
+    <footer class="footer">
+    </footer>
 
     <script>
         let contacts = [];
 
-        // Fetch and display contacts
-        async function loadContacts() {
-            try {
-                const response = await fetch('/api/get_contacts');
-                if (response.ok) {
-                    contacts = await response.json();
-                    displayContacts();
-                } else {
-                    showMessage('Failed to load contacts', 'error');
-                }
-            } catch (error) {
-                showMessage('Error loading contacts: ' + error.message, 'error');
+        // Toggle add contact form
+        function toggleAddContact() {
+            const form = document.getElementById('addContactForm');
+            const btn = document.querySelector('.add-contact-btn');
+            
+            form.classList.toggle('expanded');
+            
+            // Focus first input when expanding
+            if (form.classList.contains('expanded')) {
+                setTimeout(() => {
+                    document.getElementById('newEmail').focus();
+                }, 300);
+            } else {
+                // Clear form when collapsing
+                document.getElementById('newEmail').value = '';
+                document.getElementById('newNickname').value = '';
             }
         }
+
+        // Toggle contact edit actions
+        function toggleContactEdit(contactEmail) {
+            const emailId = contactEmail.replace('@', '_').replace('.', '_');
+            const editActions = document.getElementById(`edit_${emailId}`);
+            const editBtn = document.getElementById(`editBtn_${emailId}`);
+            
+            editActions.classList.toggle('expanded');
+            editBtn.classList.toggle('active');
+            
+            // Focus nickname input when expanding
+            if (editActions.classList.contains('expanded')) {
+                setTimeout(() => {
+                    document.getElementById(`nick_${emailId}`).focus();
+                }, 300);
+            }
+        }
+
+        // Fetch and display contacts
+        async function loadContacts() {
+    console.time('Load Contacts');
+    const startTime = Date.now();
+    
+    try {
+        console.log('Starting fetch...');
+        const response = await fetch('/api/get_contacts');
+        console.log(`Fetch completed in ${Date.now() - startTime}ms`);
+        
+        if (response.ok) {
+            const parseStart = Date.now();
+            contacts = await response.json();
+            console.log(`JSON parsing took ${Date.now() - parseStart}ms`);
+            
+            const renderStart = Date.now();
+            displayContacts();
+            console.log(`Rendering took ${Date.now() - renderStart}ms`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+    
+    console.timeEnd('Load Contacts');
+}
+
 
         // Display contacts in HTML
         function displayContacts() {
             const container = document.getElementById('contactsList');
             container.innerHTML = '';
             
+            if (contacts.length === 0) {
+                container.innerHTML = '<div class="no-contacts"><i class="fas fa-address-book"></i><br>No contacts yet. Add your first contact above!</div>';
+                return;
+            }
+            
             contacts.forEach(contact => {
                 const div = document.createElement('div');
                 div.className = 'contact' + (contact.is_blocked ? ' blocked' : '');
                 
+                const emailId = contact.contact_email.replace('@', '_').replace('.', '_');
+                
                 div.innerHTML = `
-                    <strong>${contact.nickname}</strong> - ${contact.contact_email}
-                    ${contact.is_blocked ? '<span style="color: red;">[BLOCKED]</span>' : ''}
-                    <br>
-                    <input type="text" id="nick_${contact.contact_email.replace('@', '_').replace('.', '_')}" 
-                           value="${contact.nickname}" placeholder="New nickname">
-                    <button onclick="updateNickname('${contact.contact_email}')">Update</button>
-                    <button onclick="toggleBlock('${contact.contact_email}', ${contact.is_blocked})">
-                        ${contact.is_blocked ? 'Unblock' : 'Block'}
-                    </button>
-                    <button onclick="removeContact('${contact.contact_email}')" style="color: red;">Remove</button>
-                    <button onclick="openChatHistory('${contact.contact_email}', '${contact.nickname}')">Show Chat</button>
+                    <div class="contact-header">
+                        <div class="contact-info">
+                            <div class="contact-name">
+                                <i class="fas fa-user"></i> ${contact.nickname}
+                            </div>
+                            <div class="contact-email">
+                                <i class="fas fa-envelope"></i> ${contact.contact_email}
+                            </div>
+                        </div>
+                        ${contact.is_blocked ? '<div class="blocked-label"><i class="fas fa-ban"></i> BLOCKED</div>' : ''}
+                    </div>
+                    
+                    <div class="contact-main-actions">
+                        <button class="chat-btn" onclick="openChatHistory('${contact.contact_email}', '${contact.nickname}')">
+                            <i class="fas fa-comments"></i> Chat
+                        </button>
+                        <button class="edit-btn" id="editBtn_${emailId}" onclick="toggleContactEdit('${contact.contact_email}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="contact-edit-actions" id="edit_${emailId}">
+                        <div class="edit-form-row">
+                            <input type="text" id="nick_${emailId}" 
+                                   value="${contact.nickname}" placeholder="New nickname">
+                            <button class="update-btn" onclick="updateNickname('${contact.contact_email}')">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                        <div class="edit-form-row">
+                            <button class="${contact.is_blocked ? 'unblock-btn' : 'block-btn'}" 
+                                    onclick="toggleBlock('${contact.contact_email}', ${contact.is_blocked})">
+                                <i class="fas fa-${contact.is_blocked ? 'unlock' : 'lock'}"></i> 
+                                ${contact.is_blocked ? 'Unblock' : 'Block'}
+                            </button>
+                            <button class="remove-btn" onclick="removeContact('${contact.contact_email}')">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
                 `;
                 
                 container.appendChild(div);
             });
         }
 
-        // Open chat history in new page
-        // Open chat history in same page (replace the current function in frontend.html)
-function openChatHistory(contactEmail, contactNickname) {
-    const url = `/chat_history?contact=${encodeURIComponent(contactEmail)}&nickname=${encodeURIComponent(contactNickname)}`;
-    window.location.href = url;  // Changed from window.open() to window.location.href
-}   
+        // Open chat history in same page
+        function openChatHistory(contactEmail, contactNickname) {
+            const url = `/chat_history?contact=${encodeURIComponent(contactEmail)}&nickname=${encodeURIComponent(contactNickname)}`;
+            window.location.href = url;
+        }   
 
         // Add new contact
         async function addContact() {
@@ -118,6 +741,7 @@ function openChatHistory(contactEmail, contactNickname) {
                     showMessage('Contact added successfully!', 'success');
                     document.getElementById('newEmail').value = '';
                     document.getElementById('newNickname').value = '';
+                    toggleAddContact(); // Close the form
                     loadContacts();
                 } else {
                     showMessage(result.message || 'Failed to add contact', 'error');
@@ -148,6 +772,7 @@ function openChatHistory(contactEmail, contactNickname) {
                 
                 if (result.success) {
                     showMessage('Nickname updated!', 'success');
+                    toggleContactEdit(contactEmail); // Close edit section
                     loadContacts();
                 } else {
                     showMessage(result.message || 'Failed to update nickname', 'error');
@@ -170,6 +795,7 @@ function openChatHistory(contactEmail, contactNickname) {
                 
                 if (result.success) {
                     showMessage(`Contact ${action}ed successfully!`, 'success');
+                    toggleContactEdit(contactEmail); // Close edit section
                     loadContacts();
                 } else {
                     showMessage(result.message || `Failed to ${action} contact`, 'error');
@@ -206,12 +832,25 @@ function openChatHistory(contactEmail, contactNickname) {
         // Show message to user
         function showMessage(message, type) {
             const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            messageDiv.innerHTML = `<div class="${type}"><i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}</div>`;
             setTimeout(() => messageDiv.innerHTML = '', 3000);
         }
 
+        // Close edit sections when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.contact') && !event.target.closest('.add-contact-form')) {
+                // Close all expanded edit sections
+                document.querySelectorAll('.contact-edit-actions.expanded').forEach(section => {
+                    section.classList.remove('expanded');
+                });
+                document.querySelectorAll('.edit-btn.active').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+        });
+
         // Load contacts when page loads
-        window.onload = loadContacts;
+document.addEventListener('DOMContentLoaded', loadContacts);
     </script>
 </body>
 </html>
