@@ -6,8 +6,11 @@ services:
       dockerfile: Dockerfile.glasses
     ports:
       - "81:81"
+    env_file:
+      - mentra.env
     volumes:
-      - ./src:/app
+      - ./src:/app/src
+    
 
   webview:
     build:
@@ -23,6 +26,7 @@ services:
     depends_on:
       - glasses
     restart: unless-stopped    
+
 
   cloudflared:
     image: cloudflare/cloudflared:latest
