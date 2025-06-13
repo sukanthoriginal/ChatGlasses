@@ -1,4 +1,3 @@
-# file: Dockerfile.glasses
 FROM oven/bun:latest
 
 WORKDIR /app
@@ -7,12 +6,37 @@ WORKDIR /app
 COPY package.json bun.lockb* ./
 RUN bun install
 
-# Copy app source
+# Install Python and required modules
+RUN apt-get update \
+    && apt-get install -y python3 python3-pip python3-venv \
+    && ln -s /usr/bin/python3 /usr/bin/python \
+    && pip install --break-system-packages --no-cache-dir supabase python-dotenv
+
+# Copy app source (including Python files and env)
 COPY . .
+
+# Set Python path and environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Create a symbolic link or copy env file to where Python expects it
+# Your Python script looks for ../mentra.env, so we need to handle this
+RUN if [ -f mentra.env ]; then \
+        cp mentra.env /mentra.env && \
+        echo "Environment file copied to root"; \
+    else \
+        echo "Warning: mentra.env not found in build context"; \
+    fi
+
+# Ensure Python files are executable
+RUN chmod +x src/contacts_db.py src/save_message.py
+
+# Debug: Show file structure
+RUN echo "=== File structure ===" && ls -la && echo "=== src/ contents ===" && ls -la src/ || echo "src not found"
 
 RUN bun run build
 
-# Expose port (index.ts listens on 80)
+# Expose port
 EXPOSE 81
 
 CMD ["bun", "start"]
